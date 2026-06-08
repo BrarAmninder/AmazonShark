@@ -1,434 +1,283 @@
-      <<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VirtCard • Instant Virtual & Prepaid Cards Worldwide</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image to PDF Converter</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-   :root {
-  --bg: #0b0d19;
-  --primary: #7c3aed;
-  --accent: #ec4899;
-  --text: #ffffff;
-  --text-light: #94a3b8;
-  --card-bg: rgba(255, 255, 255, 0.03);
-  --radius: 24px;
-}
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    header {
+      background: #4c51bf;
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    h1 { font-size: 2.4rem; margin-bottom: 8px; }
+    p { opacity: 0.95; }
 
-* { margin:0; padding:0; box-sizing:border-box; }
+    .main-area {
+      padding: 40px 30px;
+      text-align: center;
+    }
 
-body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.6;
-}
+    #addBtn {
+      padding: 16px 40px;
+      font-size: 1.3rem;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      margin: 20px 0;
+    }
+    #addBtn:hover { background: #4338ca; transform: scale(1.05); }
 
-.container { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+    .preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin: 30px 0;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+      min-height: 200px;
+    }
+    .preview img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #e2e8f0;
+    }
 
-header {
-  background: rgba(10, 12, 36, 0.95);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  position: sticky; top:0; z-index:1000;
-  padding: 16px 0;
-}
+    .format-section {
+      margin: 25px 0;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+      display: none;
+    }
+    select {
+      padding: 12px 16px;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      border: 2px solid #cbd5e1;
+      width: 360px;
+    }
 
-.nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+    #convertBtn {
+      padding: 16px 50px;
+      font-size: 1.4rem;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      margin: 20px 0;
+      display: none;
+    }
+    #convertBtn:hover { background: #059669; }
 
-.logo {
-  font-family: 'Playfair Display', serif;
-  font-size: 2.1rem;
-  font-weight: 800;
-  background: linear-gradient(90deg, var(--primary), var(--accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+    .loading {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      margin: 30px 0;
+    }
+    .spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #4f46e5;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-.hero {
-  text-align: center;
-  padding: 110px 20px 90px;
-}
-
-.hero h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(2.6rem, 7.5vw, 5rem);
-  line-height: 1.1;
-  margin-bottom: 1rem;
-  background: linear-gradient(to bottom, #ffffff, #a5b4fc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.hero p {
-  font-size: clamp(1.1rem, 4vw, 1.35rem);
-  max-width: 680px;
-  margin: 0 auto 2rem;
-  color: var(--text-light);
-}
-
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 28px;
-  margin-bottom: 120px;
-}
-
-.card {
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.08);
-  transition: all 0.4s;
-}
-
-.card:hover {
-  transform: translateY(-12px);
-}
-
-.card-img {
-  height: 190px;
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: #1a1f2e;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.card-img img {
-  max-width: 80%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-.card-content { padding: 24px; }
-
-.price {
-  font-size: 2.3rem;
-  font-weight: 800;
-  background: linear-gradient(90deg, var(--primary), var(--accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin: 16px 0 20px;
-}
-
-.buy-btn {
-  width: 100%;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  color: white;
-  border: none;
-  padding: 18px;
-  border-radius: 16px;
-  font-size: 1.2rem; 
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.35s;
-}
-
-.buy-btn:hover {
-  transform: translateY(-4px);
-}
-
-/* ================== MOBILE FIX ================== */
-@media (max-width: 768px) {
-  .container { padding: 0 14px; }
-  
-  .hero { padding: 90px 14px 70px; }
-  
-  .cards-grid {
-    grid-template-columns: 1fr !important;
-    gap: 22px;
-  }
-
-  .card-img { height: 165px; }
-
-  .card-content { padding: 20px; }
-
-  .price { font-size: 2rem; }
-
-  .buy-btn { padding: 16px; font-size: 1.1rem; }
-
-  h2.section-title {
-    font-size: 2.35rem;
-    margin: 30px 0 50px;
-  }
-
-  .logo { font-size: 1.85rem; }
-}
-
-@media (max-width: 480px) {
-  .hero h1 { font-size: 2.45rem; }
-  .card-img { height: 155px; }
-  .price { font-size: 1.85rem; }
-}
-
-/* Keep your original modal and other styles */
-.modal{
-  position:fixed; inset:0; background:rgba(0,0,0,0.55); display:none;
-  align-items:center; justify-content:center; z-index:2000;
-}
-.modal-box{
-  background:#151828; color:white; padding:40px; width:420px; max-width:90%;
-  border-radius:24px; text-align:center; box-shadow:0 25px 60px rgba(0,0,0,0.35);
-}
-.modal-box h2{ margin-bottom:30px; font-size:1.8rem; }
-.modal-clearcart, .modal-buy, .modal-cart{
-  width:100%; padding:18px; border:none; border-radius:16px;
-  font-size:1.2rem; font-weight:700; margin-bottom:18px; cursor:pointer;
-  color:white; background:linear-gradient(135deg,#7c3aed,#ec4899);
-}
-.modal-cancel{ color:#ccc; cursor:pointer; margin-top:10px; }
-.cart-icon, .login-icon{
-  background: rgba(255,255,255,0.03); color:white; border:1px solid rgba(255,255,255,0.1);
-  font-size:1.6rem; padding:11px 25px; border-radius:999px; cursor:pointer;
-}
-.cart-count{
-  position:absolute; top:8px; right:12px; background:var(--accent);
-  color:white; font-size:10px; padding:3px 7px; border-radius:50%;
-}
+    .status {
+      margin: 15px 0;
+      font-size: 1.1rem;
+      color: #64748b;
+    }
   </style>
 </head>
 <body>
-
-  <!-- Your original modals and content -->
-  <div id="cartModal" class="modal">
-  <div class="modal-box">
-    <h2>Your Cart</h2>
-    <div id="cartItems" style="text-align:left; margin-bottom:20px;"></div>
-    <button class="modal-clearcart" onclick="clearCart()">Clear Cart</button>
-    <button class="modal-buy" onclick="checkout()">Checkout</button>
-    <div class="modal-cancel" onclick="closeCart()">Close</div>
-  </div>
-</div>
-
-<div id="optionModal" class="modal">
-  <div class="modal-box">
-    <h2>Select Option</h2>
-    <button class="modal-buy" id="buyNowBtn">Buy Now</button>
-    <button class="modal-cart" id="addCartBtn">Add To Cart</button>
-    <div class="modal-cancel" id="cancelModal">Cancel</div>
-  </div>
-</div>
-
-<header>
   <div class="container">
-    <nav class="nav">
-      <div class="logo">VirtualCard</div>
-      <div style="display:flex; gap:14px; align-items:center;">
-        <a href="#cards" class="btn" style="padding:16px 40px; background:linear-gradient(135deg,#7c3aed,#ec4899); color:white; border-radius:999px; text-decoration:none; font-weight:700;">Explore Cards</a>
-        <div class="cart-icon" id="cartBtn">
-          🛒
-          <span class="cart-count" id="cartCount">0</span>
-        </div>
-        <div class="login-icon" id="loginBtn">👤</div>
-      </div>
-    </nav>
-  </div>
-</header>
+    <header>
+      <h1>🖼️ Image to PDF</h1>
+      <p>Convert your images into a PDF file easily</p>
+    </header>
 
-<section class="hero">
-  <div class="container">
-    <h1>Instant Virtual Cards Worldwide</h1>
-    <p>Delivered in seconds • 3DS secure • Works everywhere (including OnlyFans & subscriptions) • Non-KYC & KYC options • Perfect for privacy, gifts, or anonymous spending.</p>
-    <a href="#cards" class="btn" style="padding:20px 52px; font-size:1.25rem;">Get Your Card Now →</a>
-  </div>
-</section>
+    <div class="main-area">
+      <button id="addBtn">+ Add Images</button>
+      <input type="file" id="fileInput" multiple accept="image/*" style="display:none;">
 
-<section class="container">
-  <h2 class="section-title">Popular Gift Cards</h2>
-  <div class="cards-grid" id="cards">
-    <!-- Your original cards (unchanged) -->
-    <div class="card">
-       <div class="card-img" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/4/4a/Amazon_icon.svg'); background-size:120px; background-repeat:no-repeat; background-color:#232f3e;">Amazon</div>
-      <div class="card-content">
-        <h3>Amazon Shopping Card</h3>
-        <div class="price">$50</div>
-        <ul class="features">
-          <li>Instant email delivery</li>
-          <li>Shop millions of products</li>
-          <li>No expiration</li>
-          <li>Works worldwide</li>
-        </ul>
-        <button class="buy-btn" data-product="amazon-50">$50 – Buy Now</button>
-      </div>
-    </div>
+      <div class="preview" id="preview"></div>
 
-    <div class="card">
-      <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&q=80');">Netflix</div>
-      <div class="card-content">
-        <h3>Netflix Gift Card</h3>
-        <div class="price">$30</div>
-        <ul class="features">
-          <li>Instant digital code</li>
-          <li>Any plan, any country</li>
-          <li>Stream instantly</li>
-          <li>Global access</li>
-        </ul>
-        <button class="buy-btn" data-product="netflix-30">$30 – Buy Now</button>
+      <div class="format-section" id="formatSection">
+        <label><strong>Choose Image Quality / Format:</strong></label><br><br>
+        <select id="formatSelect">
+          <option value="PNG">PNG - Highest Quality (Largest PDF)</option>
+          <option value="JPEG" selected>JPEG - Good Quality (Recommended)</option>
+          <option value="JPG">JPG - Standard Quality</option>
+          <option value="WEBP">WebP - High Quality (Converted to JPEG)</option>
+        </select>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1614680376408-81e91ffe3db7?w=800&q=80');">Steam</div>
-      <div class="card-content">
-        <h3>Steam Wallet Code</h3>
-        <div class="price">$20</div>
-        <ul class="features">
-          <li>Instant credit</li>
-          <li>Games, DLC, items</li>
-          <li>Global support</li>
-          <li>Thousands of titles</li>
-        </ul>
-        <button class="buy-btn" data-product="steam-20">$20 – Buy Now</button>
-      </div>
-    </div>
+      <button id="convertBtn">Convert to PDF</button>
 
-    <div class="card">
-      <div class="card-img" style="background-image: url('prime-video-jpg.webp');"></div>
-      <div class="card-content">
-        <h3>Amazon Prime</h3>
-        <div class="price">$20</div>
-        <ul class="features">
-          <li>Instant credit</li>
-          <li>Games, DLC, items</li>
-          <li>Global support</li>
-          <li>Thousands of titles</li>
-        </ul>
-        <button class="buy-btn" data-product="Amazon Prime">$20 – Buy Now</button>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Processing your images... Please wait</p>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="card-img" style="background-image: url('play.webp');">Play</div>
-      <div class="card-content">
-        <h3>Play Store Code</h3>
-        <div class="price">$20</div>
-        <ul class="features">
-          <li>Instant credit</li>
-          <li>Games, DLC, items</li>
-          <li>Global support</li>
-          <li>Thousands of titles</li>
-        </ul>
-        <button class="buy-btn" data-product="Play Store Code">$20 – Buy Now</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-img" style="background-image: url('28ab48fcd5d5b19b03c126d2b6aef4b8.avif');">Roblox</div>
-      <div class="card-content">
-        <h3>Roblox Gift Card</h3>
-        <div class="price">$25</div>
-        <ul class="features">
-          <li>Instant Robux</li>
-          <li>Custom skins & items</li>
-          <li>Perfect for gamers</li>
-          <li>No expiry</li>
-        </ul>
-        <button class="buy-btn" data-product="roblox-25">$25 – Buy Now</button>
-      </div>
+      <div class="status" id="status"></div>
     </div>
   </div>
-</section>
 
-<!-- Anonymous Virtual Prepaid Cards Section (same as yours) -->
-<section class="container">
-  <h2 class="section-title">Anonymous Virtual Prepaid Cards</h2>
-  <p style="text-align:center; font-size:1.3rem; max-width:800px; margin:0 auto 60px; color:var(--text-light);">Non-KYC / low-KYC options • Instant issuance • 3DS secure • Works on OnlyFans, subscriptions, adult sites, and anywhere Visa/Mastercard is accepted • Privacy-first spending.</p>
-  <div class="cards-grid">
-    <!-- Your cards here (kept same) -->
-    <div class="card">
-      <div class="card-img" style="background-color:#131ec0; display:flex; align-items:center; justify-content:center;">
-        <img src="visa.jpg" style="width:75%; height:auto;" alt="Visa">
-      </div>
-      <div class="card-content">
-        <h3>Visa Virtual Prepaid (Non-KYC)</h3>
-        <div class="price">$100</div>
-        <ul class="features">
-          <li>Instant virtual details</li>
-          <li>3DS secure for subscriptions</li>
-          <li>Works on OnlyFans & adult platforms</li>
-          <li>Privacy-focused, reloadable options</li>
-        </ul>
-        <button class="buy-btn" data-product="visa-virtual-100">$100 – Buy Now</button>
-      </div>
-    </div>
+  <script>
+    let images = [];
 
-    <!-- Repeat similar for other cards... (I kept structure same, you can copy-paste rest) -->
-  </div>
-</section>
+    const addBtn = document.getElementById('addBtn');
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
+    const convertBtn = document.getElementById('convertBtn');
+    const loading = document.getElementById('loading');
+    const status = document.getElementById('status');
+    const formatSection = document.getElementById('formatSection');
+    const formatSelect = document.getElementById('formatSelect');
 
-<footer class="footer">
-  <!-- Your original footer content here -->
-  <div class="footer-bottom">
-    © 2026 VirtualCard • Designed for speed, privacy & global access
-  </div>
-</footer>
+    addBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', e => handleFiles(e.target.files));
 
-<script>
-// Your original JavaScript (unchanged)
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
-document.getElementById("cartCount").textContent = cart.length;
-let selectedProduct = "";
-let selectedPrice = "";
+    function handleFiles(files) {
+      Array.from(files).forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = ev => {
+            images.push({ name: file.name, data: ev.target.result });
+            renderPreview();
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
 
-const modal = document.getElementById("optionModal");
+    function renderPreview() {
+      preview.innerHTML = '';
+      images.forEach(img => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <img src="${img.data}" alt="preview">
+          <small style="display:block; text-align:center; margin-top:5px; color:#666;">${img.name}</small>
+        `;
+        preview.appendChild(div);
+      });
 
-document.querySelectorAll('.buy-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    selectedProduct = btn.dataset.product;
-    selectedPrice = btn.textContent.split('–')[0].trim();
-    modal.style.display = "flex";
-  });
-});
+      const hasImages = images.length > 0;
+      convertBtn.style.display = hasImages ? 'inline-block' : 'none';
+      formatSection.style.display = hasImages ? 'block' : 'none';
+    }
 
-document.getElementById("cancelModal").onclick = () => modal.style.display = "none";
+    // Convert image to desired format using Canvas
+    async function convertImage(imgData, targetFormat) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
 
-document.getElementById("buyNowBtn").onclick = () => {
-  alert(`Proceeding to checkout:\n${selectedProduct.toUpperCase()}\nAmount: ${selectedPrice}`);
-  modal.style.display = "none";
-};
+          let mimeType = 'image/jpeg';
+          let quality = 0.92;
 
-document.getElementById("addCartBtn").onclick = () => {
-  if(!cart.find(item => item.product === selectedProduct)){
-    cart.push({product:selectedProduct, price:selectedPrice});
-  } else {
-    alert("Item already in cart!");
-  }
-  localStorage.setItem("cart", JSON.stringify(cart));
-  document.getElementById("cartCount").textContent = cart.length;
-  modal.style.display = "none";
-};
+          if (targetFormat === 'PNG') {
+            mimeType = 'image/png';
+            quality = 1;
+          }
 
-const cartModal = document.getElementById("cartModal");
-const cartItemsDiv = document.getElementById("cartItems");
+          resolve(canvas.toDataURL(mimeType, quality));
+        };
+        img.src = imgData;
+      });
+    }
 
-document.getElementById("cartBtn").onclick = () => {
-  renderCart();
-  cartModal.style.display = "flex";
-};
+    convertBtn.addEventListener('click', async function() {
+      if (images.length === 0) return;
 
-function closeCart(){ cartModal.style.display = "none"; }
+      const selectedFormat = formatSelect.value;
 
-function renderCart(){ /* your original renderCart function */ 
-  // ... (I kept your original JS logic)
-}
+      convertBtn.style.display = 'none';
+      loading.style.display = 'flex';
+      status.textContent = `Converting to ${selectedFormat}...`;
 
-function removeItem(index){ /* your original */ }
-function checkout(){ alert("Proceeding to checkout with " + cart.length + " items"); }
-function clearCart(){ /* your original */ }
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-document.getElementById("loginBtn").onclick = () => { window.location.href = "gnc1.html"; };
-</script>
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        for (let i = 0; i < images.length; i++) {
+          status.textContent = `Processing image ${i+1} of ${images.length}...`;
+
+          if (i > 0) pdf.addPage();
+
+          let finalData = await convertImage(images[i].data, selectedFormat);
+
+          const imgProps = await getImageDimensions(finalData);
+
+          const ratio = Math.min(pageWidth / imgProps.width, (pageHeight - 30) / imgProps.height);
+          const newWidth = imgProps.width * ratio;
+          const newHeight = imgProps.height * ratio;
+
+          const x = (pageWidth - newWidth) / 2;
+          const y = (pageHeight - newHeight) / 2;
+
+          const pdfFormat = (selectedFormat === 'JPG' || selectedFormat === 'WEBP') ? 'JPEG' : selectedFormat;
+
+          pdf.addImage(finalData, pdfFormat, x, y, newWidth, newHeight);
+        }
+
+        pdf.save("Converted_Images.pdf");
+        status.innerHTML = `<strong style="color:green;">✅ PDF Generated Successfully with ${selectedFormat}!</strong>`;
+
+      } catch (err) {
+        console.error(err);
+        status.innerHTML = `<strong style="color:red;">❌ Error occurred. Please try again.</strong>`;
+      }
+
+      setTimeout(() => {
+        loading.style.display = 'none';
+        convertBtn.style.display = 'inline-block';
+      }, 2500);
+    });
+
+    function getImageDimensions(imgData) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve({ width: img.width, height: img.height });
+        img.src = imgData;
+      });
+    }
+  </script>
 </body>
 </html>
