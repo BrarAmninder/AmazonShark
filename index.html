@@ -3,751 +3,1397 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>V12 Engine – Split PDF</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <title>V12 Engine 0.1 - Premium SaaS JPG/JPEG to PNG Converter</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- JSZip for dynamic compression batching -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
         :root {
-            --red: #e8143c;
-            --red-light: #fff0f3;
-            --red-mid: #ffd6de;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-700: #374151;
-            --gray-900: #111827;
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
         }
-        body { font-family: 'Inter', sans-serif; background: #fff; color: var(--gray-900); -webkit-font-smoothing: antialiased; }
-        a { text-decoration: none; color: inherit; }
+        
+        body {
+            font-family: var(--font-sans);
+            background-color: #030014;
+            overflow-x: hidden;
+        }
 
-        header { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid var(--gray-200); }
-        nav { max-width: 1100px; margin: 0 auto; padding: 0 20px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
-        .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; color: var(--gray-900); }
-        .logo-icon { width: 32px; height: 32px; background: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
-        .logo-icon svg { display: block; }
-        .nav-links { display: none; gap: 28px; font-size: 14px; font-weight: 500; color: var(--gray-500); }
-        @media (min-width: 640px) { .nav-links { display: flex; } }
-        .nav-links a:hover { color: var(--gray-900); }
+        /* Glassmorphism Presets */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .glass-panel-interactive {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            /* Updated to 0.5s from Code 2 */
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity, border-color;
+        }
+        
+        .glass-panel-interactive:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 40px -15px rgba(124, 58, 237, 0.3);
+            transform: translate3d(0, -6px, 0) scale(1.01);
+        }
 
-        .btn-primary { background: var(--red); color: #fff; font-weight: 600; font-size: 14px; padding: 9px 20px; border-radius: 8px; border: none; cursor: pointer; transition: opacity .15s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-        .btn-primary:hover { opacity: .88; }
-        .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
-        .btn-outline { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--red); background: #fff; border: 1.5px solid var(--red-mid); padding: 9px 20px; border-radius: 8px; cursor: pointer; transition: background .15s; }
-        .btn-outline:hover { background: var(--red-light); }
-        .btn-ghost { font-size: 13px; font-weight: 600; color: var(--gray-500); background: none; border: 1.5px solid var(--gray-200); padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: all .15s; white-space: nowrap; }
-        .btn-ghost:hover { border-color: var(--red); color: var(--red); background: var(--red-light); }
+        /* Hardware Accelerated Ambient Blobs */
+        .blob-ambient {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            /* Updated opacity to 0.4 from Code 2 */
+            opacity: 0.4;
+            mix-blend-mode: screen;
+            /* Updated time to 12s from Code 2 */
+            animation: blobfloat 12s infinite ease-in-out alternate;
+            will-change: transform;
+            pointer-events: none;
+            z-index: 0;
+        }
 
-        .hero { background: var(--gray-50); text-align: center; padding: 56px 20px 48px; border-bottom: 1px solid var(--gray-200); }
-        .hero h1 { font-size: clamp(26px, 6vw, 42px); font-weight: 800; line-height: 1.15; color: var(--gray-900); max-width: 560px; margin: 0 auto 14px; }
-        .hero h1 span { color: var(--red); }
-        .hero p { font-size: 16px; color: var(--gray-500); max-width: 420px; margin: 0 auto 28px; line-height: 1.6; }
-        .hero-badges { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; font-size: 13px; color: var(--gray-500); }
-        .badge { display: inline-flex; align-items: center; gap: 5px; background: #fff; border: 1px solid var(--gray-200); border-radius: 99px; padding: 5px 12px; }
-        .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; }
+        @keyframes blobfloat {
+            /* Updated scales to 1.2 and 0.9 from Code 2 */
+            0% { transform: translate3d(0px, 0px, 0) scale(1); }
+            50% { transform: translate3d(40px, -60px, 0) scale(1.2); }
+            100% { transform: translate3d(-30px, 30px, 0) scale(0.9); }
+        }
 
-        .marquee-wrap { overflow: hidden; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); background: #fff; padding: 14px 0; }
-        .marquee-track { display: inline-flex; white-space: nowrap; animation: marquee 28s linear infinite; gap: 40px; }
-        .marquee-wrap:hover .marquee-track { animation-play-state: paused; }
-        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .marquee-track span { font-size: 13px; font-weight: 600; color: var(--gray-400); }
-        .marquee-track .sep { color: var(--gray-200); }
+        /* Premium Infinite Marquee (Added from Code 2) */
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+            display: flex;
+        }
+        
+        .marquee-content {
+            display: inline-flex;
+            animation: marquee 30s linear infinite;
+            will-change: transform;
+        }
+        
+        .marquee-container:hover .marquee-content {
+            animation-play-state: paused;
+        }
 
-        .tool-section { max-width: 860px; margin: 0 auto; padding: 40px 16px 60px; }
+        @keyframes marquee {
+            /* Upgraded to translate3d for better performance */
+            0% { transform: translate3d(0%, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
 
-        .dropzone { border: 2px dashed var(--gray-200); border-radius: 16px; padding: 48px 24px; text-align: center; cursor: pointer; position: relative; transition: border-color .2s, background .2s; background: #fff; }
-        .dropzone:hover, .dropzone.drag-over { border-color: var(--red); background: var(--red-light); }
-        .dropzone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-        .dropzone-icon { width: 56px; height: 56px; background: var(--red-light); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-        .dropzone-icon svg { color: var(--red); }
-        .dropzone h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-        .dropzone p { font-size: 13px; color: var(--gray-400); margin-bottom: 20px; }
+        /* Custom Split Before/After Slider Handling (Added from Code 2) */
+        .comparison-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
 
-        #workspace { display: none; margin-top: 24px; }
-        #workspace.visible { display: block; }
+        /* Scroll Reveal Engine styling */
+        .reveal-element {
+            opacity: 0;
+            /* Updated blur to 10px from Code 2 */
+            filter: blur(10px);
+            transform: translate3d(0, 20px, 0);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                        filter 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity, filter;
+        }
+        
+        .reveal-element.revealed {
+            opacity: 1;
+            filter: blur(0px);
+            transform: translate3d(0, 0, 0) !important;
+        }
 
-        .file-info-bar { display: flex; align-items: center; gap: 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; flex-wrap: wrap; }
-        .file-info-bar .file-icon { width: 38px; height: 38px; background: var(--red-light); border-radius: 9px; display: flex; align-items: center; justify-content: center; color: var(--red); flex-shrink: 0; }
-        .file-info-bar .file-details { flex: 1; min-width: 0; }
-        .file-info-bar .file-name { font-size: 14px; font-weight: 700; color: var(--gray-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .file-info-bar .file-meta { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+        /* Mouse Tracklight Effect */
+        #cursor-glow {
+            position: fixed;
+            /* Updated sizing to 400px from Code 2 */
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate3d(-50%, -50%, 0);
+            will-change: transform;
+            z-index: 9999;
+            mix-blend-mode: plus-lighter;
+            display: none;
+            transition: transform 0.1s cubic-bezier(0.25, 1, 0.5, 1);
+        }
 
-        /* Page preview strip */
-        .preview-section { margin-bottom: 20px; }
-        .preview-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .preview-section-header h5 { font-size: 13px; font-weight: 700; color: var(--gray-900); }
-        .preview-section-header span { font-size: 12px; color: var(--gray-400); }
+        /* Premium Smooth Floating Graphics */
+        .floating-graphic {
+            /* Updated time to 6s from Code 2 */
+            animation: smoothFloat 6s infinite ease-in-out alternate;
+            will-change: transform;
+        }
+        @keyframes smoothFloat {
+            /* Updated movement to -15px and 2deg from Code 2 */
+            0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+            100% { transform: translate3d(0, -15px, 0) rotate(2deg); }
+        }
 
-        .page-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: thin; scrollbar-color: var(--gray-200) transparent; }
-        .page-strip::-webkit-scrollbar { height: 5px; }
-        .page-strip::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
+        /* Underline growth from center effect */
+        .nav-link-effect {
+            position: relative;
+        }
+        .nav-link-effect::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            transform: scaleX(0);
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background: linear-gradient(90deg, #8b5cf6, #ec4899);
+            transform-origin: bottom center;
+            /* Updated time to 0.3s from Code 2 */
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .nav-link-effect:hover::after {
+            transform: scaleX(1);
+        }
 
-        .page-thumb { flex-shrink: 0; width: 140px; border: 2px solid var(--gray-200); border-radius: 8px; overflow: hidden; background: #fff; transition: border-color .15s, box-shadow .15s; }
-        .page-thumb.highlighted { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-light); }
-        .page-thumb canvas { width: 100%; display: block; background: #fff; }
-        .page-thumb .thumb-label { font-size: 11px; font-weight: 700; color: var(--gray-400); text-align: center; padding: 4px; border-top: 1px solid var(--gray-100); background: var(--gray-50); }
-        .page-thumb.highlighted .thumb-label { color: var(--red); background: var(--red-light); }
-        .pages-loading { font-size: 13px; color: var(--gray-400); padding: 30px 0; text-align: center; width: 100%; }
+        /* Custom Scrollbar for Queue */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+            border-radius: 99px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 99px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.4);
+        }
 
-        /* Mode tabs */
-        .mode-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        @media (max-width: 500px) { .mode-tabs { grid-template-columns: 1fr; } }
-        .mode-tab { border: 1.5px solid var(--gray-200); border-radius: 12px; padding: 14px 12px; cursor: pointer; background: #fff; text-align: left; transition: all .2s; }
-        .mode-tab:hover { border-color: var(--red-mid); background: var(--red-light); }
-        .mode-tab.active { border-color: var(--red); background: var(--red-light); }
-        .mode-tab-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--gray-100); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; color: var(--gray-500); transition: all .2s; }
-        .mode-tab.active .mode-tab-icon { background: var(--red); color: #fff; }
-        .mode-tab h4 { font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
-        .mode-tab p { font-size: 11px; color: var(--gray-500); line-height: 1.4; }
+        .remove-asset-btn .hover-text {
+            display: none;
+        }
+        .remove-asset-btn:hover .default-text {
+            display: none;
+        }
+        .remove-asset-btn:hover .hover-text {
+            display: inline;
+        }
+        
+        /* Ultra Smooth Physics-based progress transitions */
+        #global-progress-fill {
+            transition: width 250ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
 
-        /* Controls panel */
-        .controls-panel { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
-        .controls-panel h5 { font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 14px; }
 
-        .ranges-list { display: flex; flex-direction: column; gap: 8px; }
-        .range-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .range-row label { font-size: 12px; font-weight: 600; color: var(--gray-500); min-width: 48px; }
-        .range-inputs { display: flex; align-items: center; gap: 6px; }
-        .range-inputs input[type="number"] { width: 70px; padding: 7px 10px; border: 1.5px solid var(--gray-200); border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--gray-900); text-align: center; outline: none; transition: border-color .15s; }
-        .range-inputs input[type="number"]:focus { border-color: var(--red); }
-        .range-inputs .dash { font-size: 14px; color: var(--gray-400); font-weight: 700; }
-        .range-name-input { flex: 1; min-width: 120px; padding: 7px 10px; border: 1.5px solid var(--gray-200); border-radius: 8px; font-size: 13px; color: var(--gray-700); outline: none; transition: border-color .15s; background: #fff; }
-        .range-name-input:focus { border-color: var(--red); }
-        .btn-icon { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--gray-200); background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--gray-400); transition: all .15s; flex-shrink: 0; }
-        .btn-icon:hover { border-color: var(--red); color: var(--red); background: var(--red-light); }
-        .add-range-btn { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--red); background: none; border: 1.5px dashed var(--red-mid); padding: 8px 16px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background .15s; }
-        .add-range-btn:hover { background: var(--red-light); }
+        
+</style>
 
-        .page-count-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .page-count-row label { font-size: 13px; font-weight: 600; color: var(--gray-700); }
-        .page-count-row input[type="number"] { width: 80px; padding: 8px 12px; border: 1.5px solid var(--gray-200); border-radius: 8px; font-size: 14px; font-weight: 700; color: var(--red); text-align: center; outline: none; }
-        .page-count-row input[type="number"]:focus { border-color: var(--red); }
-        .page-count-preview { font-size: 12px; color: var(--gray-500); margin-top: 10px; background: #fff; border: 1px solid var(--gray-200); border-radius: 8px; padding: 8px 12px; }
-
-        /* Action bar */
-        .action-bar { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
-        @media (min-width: 480px) { .action-bar { flex-direction: row; justify-content: space-between; align-items: center; } }
-        .privacy-note { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray-400); }
-        .privacy-note svg { flex-shrink: 0; color: #22c55e; }
-
-        /* Progress */
-        .progress-wrap { display: none; margin-top: 16px; }
-        .progress-wrap.visible { display: block; }
-        .progress-bar-bg { background: var(--gray-100); border-radius: 99px; height: 6px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; background: var(--red); border-radius: 99px; transition: width .3s ease; width: 0%; }
-        .progress-label { font-size: 12px; color: var(--gray-500); margin-top: 6px; text-align: center; }
-
-        /* How it works */
-        .section { max-width: 1100px; margin: 0 auto; padding: 60px 20px; }
-        .section-header { text-align: center; margin-bottom: 40px; }
-        .section-header h2 { font-size: clamp(22px, 4vw, 30px); font-weight: 800; color: var(--gray-900); margin-bottom: 8px; }
-        .section-header p { font-size: 15px; color: var(--gray-500); }
-        .steps-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        @media (min-width: 760px) { .steps-grid { grid-template-columns: repeat(4, 1fr); } }
-        .step-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 14px; padding: 22px 18px; }
-        .step-num { font-size: 11px; font-weight: 800; color: var(--red); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; }
-        .step-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--red-light); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: var(--red); }
-        .step-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
-        .step-card p { font-size: 13px; color: var(--gray-500); line-height: 1.55; }
-
-        .features-bg { background: var(--gray-50); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); }
-        .features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-        @media (min-width: 640px) { .features-grid { grid-template-columns: repeat(4, 1fr); } }
-        .feature-card { background: #fff; border: 1px solid var(--gray-200); border-radius: 14px; padding: 20px 16px; }
-        .feature-icon { width: 38px; height: 38px; border-radius: 9px; background: var(--red-light); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; color: var(--red); }
-        .feature-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
-        .feature-card p { font-size: 12px; color: var(--gray-500); line-height: 1.5; }
-
-        .faq-list { max-width: 680px; margin: 0 auto; }
-        .faq-item { border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; margin-bottom: 10px; background: #fff; }
-        .faq-trigger { width: 100%; padding: 16px 20px; text-align: left; background: none; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; color: var(--gray-900); gap: 12px; }
-        .faq-trigger:hover { background: var(--gray-50); }
-        .faq-trigger svg { flex-shrink: 0; transition: transform .25s; color: var(--gray-400); }
-        .faq-trigger.open svg { transform: rotate(180deg); }
-        .faq-content { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
-        .faq-content p { padding: 4px 20px 16px; font-size: 14px; color: var(--gray-500); line-height: 1.6; border-top: 1px solid var(--gray-100); }
-
-        .cta-section { text-align: center; padding: 64px 20px; max-width: 520px; margin: 0 auto; }
-        .cta-section h2 { font-size: clamp(22px, 4vw, 30px); font-weight: 800; margin-bottom: 10px; }
-        .cta-section p { font-size: 15px; color: var(--gray-500); margin-bottom: 24px; }
-
-        footer { background: var(--gray-50); border-top: 1px solid var(--gray-200); padding: 40px 20px 28px; }
-        .footer-inner { max-width: 1100px; margin: 0 auto; }
-        .footer-top { display: grid; grid-template-columns: 1fr; gap: 32px; margin-bottom: 32px; }
-        @media (min-width: 640px) { .footer-top { grid-template-columns: 1fr 1fr 1fr 1fr; } }
-        .footer-brand p { font-size: 13px; color: var(--gray-500); margin-top: 10px; line-height: 1.6; }
-        .footer-col h5 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--gray-400); margin-bottom: 12px; }
-        .footer-col ul { list-style: none; }
-        .footer-col li + li { margin-top: 8px; }
-        .footer-col a { font-size: 14px; color: var(--gray-500); }
-        .footer-col a:hover { color: var(--gray-900); }
-        .footer-bottom { border-top: 1px solid var(--gray-200); padding-top: 20px; text-align: center; font-size: 13px; color: var(--gray-400); }
-
-        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--gray-900); color: #fff; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 99px; opacity: 0; transition: all .3s; pointer-events: none; z-index: 999; white-space: nowrap; }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    </style>
 </head>
-<body>
+<body class="text-slate-200 selection:bg-purple-500 selection:text-white">
 
-<header>
-    <nav>
-        <a href="#" class="logo">
-            <div class="logo-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    <!-- Preloader Experience Screen -->
+    <div id="preloader" class="fixed inset-0 bg-[#030014] z-[99999] flex flex-col items-center justify-center transition-opacity duration-700">
+        <div class="relative flex flex-col items-center">
+            <div class="w-16 h-16 rounded-full border-2 border-purple-500/20 border-t-purple-500 animate-spin mb-4"></div>
+            <div class="text-sm tracking-widest uppercase font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 animate-pulse">
+                V12 Engine 0.1 Initialization
             </div>
-            V12 Engine
-        </a>
-        <div class="nav-links">
-            <a href="#tool">Split PDF</a>
-            <a href="#how-it-works">How It Works</a>
-            <a href="#features">Features</a>
-            <a href="#faq">FAQ</a>
+            <div class="w-48 h-1 bg-white/5 rounded-full mt-4 overflow-hidden">
+                <div class="w-full h-full bg-gradient-to-r from-purple-500 to-pink-500 origin-left scale-x-0 animate-[progress_1.5s_ease-in-out_all] forwards" style="animation-fill-mode: forwards;"></div>
+            </div>
         </div>
-        <a href="#tool" class="btn-primary">Split Now</a>
-    </nav>
-</header>
-
-<section class="hero">
-    <h1>Split PDF into <span>Separate Files</span> Instantly</h1>
-    <p>Custom ranges, equal sections, or one page per file. Fast, free, and 100% private.</p>
-    <a href="#tool" class="btn-primary" style="margin-bottom:24px; display:inline-flex;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Start Splitting Free
-    </a>
-    <div class="hero-badges">
-        <span class="badge"><span class="dot"></span> 100% Browser-Based</span>
-        <span class="badge"><span class="dot"></span> No File Uploads</span>
-        <span class="badge"><span class="dot"></span> All PDF Sizes</span>
     </div>
-</section>
+    <style>
+        @keyframes progress {
+            to { transform: scaleX(1); }
+        }
+    </style>
 
-<div class="marquee-wrap">
-    <div class="marquee-track">
-        <span>📄 Students</span><span class="sep">•</span>
-        <span>💼 Office Workers</span><span class="sep">•</span>
-        <span>⚖️ Legal Teams</span><span class="sep">•</span>
-        <span>🏥 Medical Records</span><span class="sep">•</span>
-        <span>📊 Finance Teams</span><span class="sep">•</span>
-        <span>🎓 Researchers</span><span class="sep">•</span>
-        <span>📄 Students</span><span class="sep">•</span>
-        <span>💼 Office Workers</span><span class="sep">•</span>
-        <span>⚖️ Legal Teams</span><span class="sep">•</span>
-        <span>🏥 Medical Records</span><span class="sep">•</span>
-        <span>📊 Finance Teams</span><span class="sep">•</span>
-        <span>🎓 Researchers</span><span class="sep">•</span>
+
+
+    <!-- Interactive Cursor Ambient Glow Element -->
+    <div id="cursor-glow"></div>
+
+    <!-- Scroll Progress Top Status Indicator -->
+    <div id="scroll-progress" class="fixed top-0 left-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 z-[60] w-0 transition-all duration-500"></div>
+
+    <!-- Global Background Elements Layer -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="blob-ambient w-[500px] h-[500px] bg-purple-600/20 top-[-100px] left-[-100px]"></div>
+        <div class="blob-ambient w-[600px] h-[600px] bg-blue-600/15 top-[30%] right-[-100px] [animation-delay:2s]"></div>
+        <div class="blob-ambient w-[550px] h-[550px] bg-pink-600/10 bottom-[10%] left-[5%] [animation-delay:4s]"></div>
+        <div class="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.015)_1px,transparent_1px)] [background-size:24px_24px]"></div>
     </div>
+
+   
+
+     <!-- 1. Premium Navigation Pill Bar Design -->
+    <header class="fixed top-4 left-0 w-full z-50 px-4 md:px-8">
+        <nav class="max-w-7xl mx-auto glass-panel rounded-full px-6 py-3 flex items-center justify-between shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-white/5 transition-all duration-300">
+            <!-- Brand Logo -->
+            <a href="#" class="flex items-center gap-2 group">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-500">
+                    <i data-lucide="zap" class="w-5 h-5 text-white animate-pulse"></i>
+                </div>
+                <span class="text-xl font-extrabold tracking-tight text-white">V12 Engine<span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500"> 0.1</span></span>
+            </a>
+
+            <!-- Central Desktop Navigation Layout Links -->
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+                <a href="#converter" class="text-slate-200 nav-link-effect hover:text-white transition-colors">Converter</a>
+                <a href="#features" class="nav-link-effect hover:text-white transition-colors">Features</a>
+                <a href="#how-it-works" class="nav-link-effect hover:text-white transition-colors">How It Works</a>
+                <a href="#comparison" class="nav-link-effect hover:text-white transition-colors">Live Compare</a>
+                <a href="#faq" class="nav-link-effect hover:text-white transition-colors">FAQ</a>
+            </div>
+
+            <!-- CTA Actions Block -->
+            <div class="flex items-center gap-4">
+                <a href="#converter" class="relative group overflow-hidden px-5 py-2.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-pink-500 transition-all duration-300 shadow-[0_4px_20px_rgba(139,92,246,0.4)] hover:shadow-[0_4px_30px_rgba(236,72,153,0.6)] hover:scale-105 active:scale-95">
+                    <span class="relative z-10 flex items-center gap-2">
+                        Convert Now <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                    </span>
+                    <div class="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+     <!-- 2. Interactive Premium Hero Section -->
+    <section class="relative min-h-screen pt-32 pb-20 flex items-center justify-center z-10 px-4">
+        <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            
+            <!-- Left Side Core SaaS Pitch Messaging -->
+            <div class="space-y-8 text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-bold text-purple-300 tracking-wide uppercase mx-auto lg:mx-0 reveal-element [transform:translateY(30px)]">
+                    <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span> Fast jpeg to png Conversion
+                </div>
+                
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight text-white reveal-element [transform:translateY(30px)] [transition-delay:0.1s]">
+                    Convert JPG and JPEG <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400"> images to PNG</span> in seconds.
+                </h1>
+                
+                <p class="text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 reveal-element [transform:translateY(30px)] [transition-delay:0.2s]">
+                Convert JPG and JPEG images to PNG directly in your browser with fast, secure, and private processing. Your files are never uploaded, ensuring high-quality PNG output.
+
+                </p>
+
+                <!-- Premium Metrics Counters Block -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-6 pt-4 max-w-md mx-auto lg:mx-0 reveal-element [transform:translateY(30px)] [transition-delay:0.3s]">
+                    <div class="border-l-2 border-purple-500/30 pl-4 text-left">
+                        <div class="text-2xl sm:text-3xl font-black text-white stat-counter" data-target="50">0</div>
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-widest">Images Converted</div>
+                    </div>
+                    <div class="border-l-2 border-pink-500/30 pl-4 text-left">
+                        <div class="text-2xl sm:text-3xl font-black text-white stat-counter" data-target="99">0</div>
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-widest">Successful Conversions</div>
+                    </div>
+                    <div class="border-l-2 border-blue-500/30 pl-4 text-left col-span-2 sm:col-span-1">
+                        <div class="text-2xl sm:text-3xl font-black text-white">0%</div>
+                        <div class="text-xs font-semibold text-slate-500 uppercase tracking-widest">Data Uploaded to Servers</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 reveal-element [transform:translateY(30px)] [transition-delay:0.4s]">
+                    <a href="#converter" class="px-8 py-4 rounded-xl bg-white text-slate-950 font-bold hover:bg-slate-100 transition-all shadow-xl hover:scale-105 active:scale-95">Start Converting for Free</a>
+                    <a href="#features" class="px-8 py-4 rounded-xl glass-panel text-white font-semibold border-white/10 hover:bg-white/5 transition-all">Explore Features</a>
+                </div>
+            </div>
+
+            <!-- Right Side Complex Live Dynamic Composition Block -->
+            <div id="hero-graphic" class="relative w-full aspect-square max-w-[500px] mx-auto flex items-center justify-center reveal-element [transform:scale(0.95)] [transition-delay:0.2s]">
+                <!-- Outer Ring Orbit Animations -->
+                <div class="absolute inset-0 rounded-full border border-purple-500/10 animate-[spin_40s_linear_infinite]"></div>
+                <div class="absolute inset-12 rounded-full border border-dashed border-pink-500/10 animate-[spin_20s_linear_infinite_reverse]"></div>
+                
+                <!-- Central Micro System Presentation Mockup Card -->
+                <div class="relative w-72 h-80 glass-panel rounded-2xl border-white/10 p-6 flex flex-col justify-between shadow-2xl floating-graphic z-10">
+                    <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                        <span class="text-xs font-bold text-slate-400 tracking-wider uppercase">Conversion Status</span>
+                        <span class="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_10px_#4ade80]"></span>
+                    </div>
+                    
+                    <!-- Dynamic Live Graphic Vector Presentation -->
+                    <div class="my-auto space-y-4 relative py-6">
+                        <div class="w-full bg-white/5 rounded-xl p-3 flex items-center gap-3 border border-white/5">
+                            <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-xs">JPG</div>
+                            <div class="flex-1">
+                                <div class="w-16 h-2 bg-white/20 rounded mb-1"></div>
+                                <div class="w-24 h-1.5 bg-white/10 rounded"></div>
+                            </div>
+                            <span class="text-xs font-bold text-purple-400">200 KB</span>
+                        </div>
+                        
+                        <!-- Flow Dynamic Direction Icon Connect -->
+                        <div class="flex justify-center my-1">
+                            <div class="w-8 h-8 rounded-full bg-pink-500/20 border border-pink-500/40 flex items-center justify-center text-pink-400 animate-bounce">
+                                <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+
+                        <div class="w-full bg-white/5 rounded-xl p-3 flex items-center gap-3 border border-white/5">
+                            <div class="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center text-pink-400 font-bold text-xs">PNG</div>
+                            <div class="flex-1">
+                                <div class="w-20 h-2 bg-white/20 rounded mb-1"></div>
+                                <div class="w-12 h-1.5 bg-white/10 rounded"></div>
+                            </div>
+                            <span class="text-xs font-bold text-pink-400">2 MB</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Status Tracking Ring -->
+                    <div class="flex items-center justify-between bg-purple-950/20 border border-purple-500/20 rounded-xl p-2.5">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="zap" class="w-4 h-4 text-purple-400 animate-pulse"></i>
+                            <span class="text-[11px] font-bold text-slate-300">Status</span>
+                        </div>
+                        <span class="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Ready to Convert</span>
+                    </div>
+                </div>
+
+                <!-- Abstract Layer Tags and Cards Layout Inside Composition Background -->
+                <div class="absolute top-8 left-4 glass-panel border-white/5 px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg floating-graphic [animation-delay:1.5s] z-20 text-xs font-bold">
+                    <i data-lucide="image" class="w-4 h-4 text-blue-400"></i> JPEG/JPG
+                </div>
+                <div class="absolute bottom-12 right-2 glass-panel border-white/5 px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg floating-graphic [animation-delay:0.7s] z-20 text-xs font-bold">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-green-400"></i> 100% Local Processing
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+ <!-- 11. Infinite Scrolling Trusted Logos Marquee -->
+    <section class="border-y border-white/5 py-10 bg-black/40 backdrop-blur-md relative z-10 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 text-center mb-6">
+            <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Trusted by Teams Worldwide</span>
+        </div>
+        <div class="marquee-container w-full">
+            <div class="marquee-content gap-16 text-lg font-bold text-slate-400 tracking-wider">
+                <span>📸 Photographers</span>
+                <span class="text-purple-500">•</span>
+                <span>🎨 Graphic Designers</span>
+                <span class="text-pink-500">•</span>
+                <span>🛍️ Online Sellers</span>
+                <span class="text-blue-500">•</span>
+                <span>🎓 Students</span>
+                <span class="text-green-500">•</span>
+                <span>📱 Content Creators</span>
+                <span class="text-purple-500">•</span>
+                <span>💼 Business Teams</span>
+                <span class="text-pink-500">•</span>
+                <!-- Duplicate Content Loop to Support Fluid Scrolling Animation -->
+                <span>📸 Photographers</span>
+                <span class="text-purple-500">•</span>
+                <span>🎨 Graphic Designers</span>
+                <span class="text-pink-500">•</span>
+                <span>🛍️ Online Sellers</span>
+                <span class="text-blue-500">•</span>
+                <span>🎓 Students</span>
+                <span class="text-green-500">•</span>
+                <span>📱 Content Creators</span>
+                <span class="text-purple-500">•</span>
+                <span>💼 Business Teams</span>
+                <span class="text-pink-500">•</span>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- App Section -->
+    <section id="converter" class="py-24 relative z-10 px-4">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center space-y-4 mb-12 reveal-element">
+                <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white">Smart JPEG/JPG to PNG Converter</h2>
+                <p class="text-slate-400 max-w-lg mx-auto">Upload or drag and drop your JPEG or JPG images to convert them into high-quality PNG files instantly.</p>
+            </div>
+
+            <!-- Upload Box and Multi Queue Area -->
+            <div class="glass-panel rounded-3xl border-white/10 p-6 md:p-8 space-y-6 shadow-2xl relative reveal-element">
+                
+                <!-- Dropzone Workspace -->
+                <div id="dropzone" class="border-2 border-dashed border-white/10 hover:border-purple-500/50 bg-white/[0.01] hover:bg-purple-900/[0.04] rounded-2xl p-8 md:p-12 text-center transition-all duration-300 cursor-pointer group relative overflow-hidden">
+                    <input type="file" id="file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/jpeg, image/jpg" multiple>
+                    <div class="space-y-4 pointer-events-none relative z-10">
+                        <div class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto border border-white/10 group-hover:scale-110 group-hover:border-purple-500/50 group-hover:bg-purple-500/10 transition-all duration-500 shadow-inner">
+                            <i data-lucide="upload-cloud" class="w-7 h-7 text-slate-400 group-hover:text-purple-400 transition-colors"></i>
+                        </div>
+                        <div>
+                            <p class="text-base font-bold text-white tracking-wide group-hover:text-purple-300 transition-colors">Drag & drop your JPG/JPEG files here or click to browse</p>
+                            <p class="text-xs text-slate-500 mt-1">Supports multiple images • Instant conversion</p>
+                        </div>
+                        <button type="button" class="px-6 py-2.5 rounded-xl bg-white/5 group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 group-hover:text-white transition-all text-xs font-bold text-slate-300 border border-white/10 shadow-md">Browse Files</button>
+                    </div>
+                </div>
+
+                <!-- Live Queue Display Interface -->
+                <div id="queue-wrapper" class="hidden space-y-5">
+                    
+                    <!-- Branded Processing Status Bar -->
+                    <div id="global-processing-bar" class="hidden glass-panel border-purple-500/30 bg-purple-950/10 rounded-2xl p-4 flex flex-col gap-2 relative overflow-hidden shadow-inner transition-all duration-300">
+                        <div class="flex justify-between items-center text-xs font-bold text-slate-300">
+                            <span class="flex items-center gap-2">
+                                <span id="engine-status-dot" class="w-2 h-2 rounded-full bg-pink-500 animate-ping"></span>
+                                <span id="engine-status-text">Read Images</span>
+                            </span>
+                            <span id="global-percentage" class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-extrabold text-sm">0%</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
+                            <div id="global-progress-fill" class="h-full bg-gradient-to-r from-purple-600 via-purple-400 to-pink-500" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+                            <span class="text-xs font-bold text-slate-400 tracking-wider uppercase" id="queue-count">Converted Images (0)</span>
+                        </div>
+                        <button id="clear-queue-btn" class="text-xs font-bold text-pink-400 hover:text-pink-300 transition-colors flex items-center gap-1 hover:underline">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Clear All
+                        </button>
+                    </div>
+                    
+                    <!-- Dynamic Rows Container -->
+                    <div id="queue-container" class="max-h-[380px] overflow-y-auto space-y-2.5 pr-1 custom-scrollbar"></div>
+                </div>
+
+                <!-- Actions Controls Layout Bar -->
+                <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/5">
+                    <div class="flex items-center gap-2 text-xs text-slate-400">
+                        <i data-lucide="lock" class="w-4 h-4 text-purple-400"></i> Your files are never uploaded or stored on any server.
+                    </div>
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <button id="download-individually-btn" disabled class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-xs opacity-40 cursor-not-allowed transition-all duration-300 shadow-lg enabled:hover:scale-105 enabled:hover:brightness-125 active:scale-98 flex items-center justify-center gap-2 cursor-pointer">
+                            <i data-lucide="download" class="w-4 h-4"></i> Download PNG 
+                        </button>
+
+                        <button id="download-all-btn" disabled class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold text-xs opacity-40 cursor-not-allowed transition-all duration-300 shadow-lg enabled:hover:scale-105 enabled:hover:brightness-125 active:scale-98 flex items-center justify-center gap-2 cursor-pointer">
+                            <i data-lucide="archive" class="w-4 h-4"></i> Download All as ZIP
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+ <!-- 3. Dynamic Interactive Alternating Content Information Blocks -->
+    <section class="py-24 relative z-10 px-4 max-w-7xl mx-auto space-y-32">
+        
+        <!-- Alternate Block Row 1: Text Left / Composition Right -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div class="space-y-6 reveal-element [transform:translateX(-30px)]">
+                <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-3xl font-extrabold text-white tracking-tight">High-Quality PNG Conversion</h3>
+                <p class="text-slate-400 leading-relaxed">Convert JPEG and JPG images to PNG while preserving image quality, colors, and important details. Our conversion engine is designed to produce clean, sharp PNG files without affecting the appearance of your images. Whether you're creating graphics for websites, presentations, design projects, or personal use, you can rely on consistent, high-quality results every time.</p>
+                <ul class="space-y-3 text-sm text-slate-300 font-medium">
+                    <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-purple-400"></i> Preserves image quality, colors, and fine details</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-purple-400"></i> Produces clean, high-quality PNG files ready to use</li>
+                </ul>
+            </div>
+            <div class="relative w-full aspect-video bg-white/[0.01] glass-panel border-white/5 rounded-2xl p-4 shadow-2xl floating-graphic reveal-element [transform:translateX(30px)]">
+                <div class="w-full h-full flex items-center justify-center overflow-hidden rounded-xl">
+    <img 
+        src="stergo-fantasy-2049567_1920.jpg" 
+        alt="Canvas Processing Pipeline" 
+        class="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity duration-300"
+    />
 </div>
-
-<section id="tool" class="tool-section">
-    <div id="dropzone" class="dropzone">
-        <input type="file" id="file-input" accept="application/pdf">
-        <div class="dropzone-icon">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        </div>
-        <h3>Drop your PDF here</h3>
-        <p>PDF files supported — processed entirely in your browser</p>
-        <button type="button" class="btn-outline">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Select PDF
-        </button>
-    </div>
-
-    <div id="workspace">
-        <div class="file-info-bar">
-            <div class="file-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            </div>
-            <div class="file-details">
-                <div class="file-name" id="file-name">document.pdf</div>
-                <div class="file-meta" id="file-meta">Loading…</div>
-            </div>
-            <button class="btn-ghost" id="change-file-btn">Change File</button>
-        </div>
-
-        <div class="preview-section">
-            <div class="preview-section-header">
-                <h5>Page Preview</h5>
-                <span id="page-count-label"></span>
-            </div>
-            <div id="page-strip" class="page-strip">
-                <div class="pages-loading">Rendering pages…</div>
             </div>
         </div>
 
-        <div class="mode-tabs">
-            <button class="mode-tab active" data-mode="ranges" type="button">
-                <div class="mode-tab-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <!-- Alternate Block Row 2: Composition Left / Text Right -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div class="relative w-full aspect-video bg-white/[0.01] glass-panel border-white/5 rounded-2xl p-4 shadow-2xl floating-graphic [animation-delay:1s] order-2 lg:order-1 reveal-element [transform:translateX(-30px)]">
+                <div class="w-full h-full flex items-center justify-center overflow-hidden rounded-xl">
+    <img 
+        src="gpt-image-2_a_cinematic_photo_of_Create_a_modern_premium_SaaS-style_UI_section_for_an_image_-0 (1).jpg" 
+        alt="Canvas Processing Pipeline" 
+        class="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity duration-300"
+    />
+</div>
+            </div>
+            <div class="space-y-6 order-1 lg:order-2 reveal-element [transform:translateX(30px)]">
+                <div class="w-12 h-12 rounded-2xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
                 </div>
-                <h4>Custom Ranges</h4>
-                <p>Select specific page ranges for separate PDFs</p>
-            </button>
-            <button class="mode-tab" data-mode="count" type="button">
-                <div class="mode-tab-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <h3 class="text-3xl font-extrabold text-white tracking-tight">Fast Browser-Based Conversion</h3>
+                <p class="text-slate-400 leading-relaxed">
+                 Convert your JPEG and JPG images to PNG in seconds with fast, reliable browser-based processing. Everything runs directly on your device, so there's no waiting for uploads or server processing. This provides a smooth conversion experience while keeping your files completely private from start to finish.
+                </p>
+                <ul class="space-y-3 text-sm text-slate-300 font-medium">
+                    <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-pink-400"></i> Fast conversion with no uploads or waiting</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-pink-400"></i> Smooth, reliable performance with complete privacy</li>
+                </ul>
+            </div>
+        </div>
+ 
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div class="space-y-6 reveal-element [transform:translateX(-30px)]">
+                <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
                 </div>
-                <h4>Split by Count</h4>
-                <p>Divide into equal-sized sections automatically</p>
-            </button>
-            <button class="mode-tab" data-mode="pages" type="button">
-                <div class="mode-tab-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                </div>
-                <h4>One Per Page</h4>
-                <p>Save each page as an individual PDF file</p>
-            </button>
+                <h3 class="text-3xl font-extrabold text-white tracking-tight">Batch Image Conversion</h3>
+                <p class="text-slate-400 leading-relaxed">Save time by converting multiple JPEG and JPG images to PNG in a single session. Simply upload your files, let the converter process them automatically, and download each PNG individually or all converted images together as a ZIP archive. It's a quick and convenient solution for handling multiple images at once.</p>
+                <ul class="space-y-3 text-sm text-slate-300 font-medium">
+                    <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-purple-400"></i> Convert multiple images in one session</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-purple-400"></i> Download files individually or as a ZIP archive</li>
+                </ul>
+            </div>
+            <div class="relative w-full aspect-video bg-white/[0.01] glass-panel border-white/5 rounded-2xl p-4 shadow-2xl floating-graphic reveal-element [transform:translateX(30px)]">
+                <div class="w-full h-full flex items-center justify-center overflow-hidden rounded-xl">
+    <img 
+        src="gpt-image-2_a_cinematic_photo_of_Create_a_premium_modern_SaaS_landing_page_hero_section_in_a-0 (1).jpg" 
+        alt="Canvas Processing Pipeline" 
+        class="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity duration-300"
+    />
+</div>
+            </div>
         </div>
 
-        <div class="controls-panel">
-            <div id="panel-ranges">
-                <h5>Define Page Ranges</h5>
-                <div class="ranges-list" id="ranges-list"></div>
-                <button class="add-range-btn" id="add-range-btn" type="button">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Add Range
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div class="relative w-full aspect-video bg-white/[0.01] glass-panel border-white/5 rounded-2xl p-4 shadow-2xl floating-graphic [animation-delay:1s] order-2 lg:order-1 reveal-element [transform:translateX(-30px)]">
+                <div class="w-full h-full flex items-center justify-center overflow-hidden rounded-xl">
+    <img 
+        src="gpt-image-2_a_cinematic_photo_of_Create_a_modern_premium_SaaS-style_UI_section_for_an_image_-0 (10).jpg" 
+        alt="Canvas Processing Pipeline" 
+        class="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity duration-300"
+    />
+</div>
+            </div>
+            <div class="space-y-6 order-1 lg:order-2 reveal-element [transform:translateX(30px)]">
+                <div class="w-12 h-12 rounded-2xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-3xl font-extrabold text-white tracking-tight">JPEG & JPG Support</h3>
+                <p class="text-slate-400 leading-relaxed">
+                 Our converter fully supports both JPEG (.jpeg) and JPG (.jpg) image formats, making it easy to convert your images into high-quality PNG files. Upload your images, start the conversion with a single click, and download PNG files that are ready to use across websites, applications, documents, presentations, and graphic design projects.
+                </p>
+                <ul class="space-y-3 text-sm text-slate-300 font-medium">
+                    <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-pink-400"></i> Supports both JPEG (.jpeg) and JPG (.jpg) formats</li>
+                    <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-pink-400"></i> Reliable, high-quality PNG conversion every time</li>
+                </ul>
+            </div>
+        </div>
+
+        
+    </section>
+
+
+ <!-- 6. Structured Workflow Sequence Segment -->
+    <section id="how-it-works" class="py-24 bg-black/30 relative z-10 px-4 border-y border-white/5">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center space-y-4 mb-16 reveal-element [transform:translateY(20px)]">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">How It Works</h2>
+                <p class="text-slate-400 max-w-md mx-auto">Convert your images in four simple steps. Fast, secure, and completely private.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 relative">
+                <!-- Card Item 1 -->
+                <div class="glass-panel-interactive rounded-2xl p-6 relative flex flex-col space-y-4 reveal-element [transform:translateY(30px)]">
+                    <div class="text-xs font-black text-purple-400/40 font-mono tracking-widest uppercase"></div>
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+                        <i data-lucide="file-up" class="w-5 h-5"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white">Upload Image</h4>
+                    <p class="text-slate-400 text-sm">Select a JPEG or JPG image from your device, or simply drag and drop it into the upload area. Your image is ready for conversion as soon as it's added.</p>
+                </div>
+                <!-- Card Item 2 -->
+                <div class="glass-panel-interactive rounded-2xl p-6 relative flex flex-col space-y-4 reveal-element [transform:translateY(30px)] [transition-delay:0.1s]">
+                    <div class="text-xs font-black text-pink-400/40 font-mono tracking-widest uppercase"></div>
+                    <div class="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-400">
+                        <i data-lucide="binary" class="w-5 h-5"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white">Automatic Processing</h4>
+                    <p class="text-slate-400 text-sm">Once your JPEG or JPG image is uploaded, the conversion starts automatically. No extra steps or clicks are required.</p>
+                </div>
+                <!-- Card Item 3 -->
+                <div class="glass-panel-interactive rounded-2xl p-6 relative flex flex-col space-y-4 reveal-element [transform:translateY(30px)] [transition-delay:0.2s]">
+                    <div class="text-xs font-black text-blue-400/40 font-mono tracking-widest uppercase"></div>
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                        <i data-lucide="cpu" class="w-5 h-5"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white">Create Your PNG</h4>
+                    <p class="text-slate-400 text-sm">The converter transforms your JPEG or JPG image into a high-quality PNG while preserving colors, clarity, and important details.</p>
+                </div>
+                <!-- Card Item 4 -->
+                <div class="glass-panel-interactive rounded-2xl p-6 relative flex flex-col space-y-4 reveal-element [transform:translateY(30px)] [transition-delay:0.3s]">
+                    <div class="text-xs font-black text-green-400/40 font-mono tracking-widest uppercase"></div>
+                    <div class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400">
+                        <i data-lucide="file-check" class="w-5 h-5"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white">Download Your PNG</h4>
+                    <p class="text-slate-400 text-sm">Once the conversion is complete, download your PNG image instantly or save all converted images together as a ZIP archive.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+     <!-- 8. Premium Interactive Before/After Comparison Slider Block -->
+    <section id="comparison" class="py-24 relative z-10 px-4 max-w-5xl mx-auto">
+        <div class="text-center space-y-4 mb-12 reveal-element [transform:translateY(20px)]">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Image Comparison</h2>
+            <p class="text-slate-400 max-w-md mx-auto">Drag the slider to compare original JPEG/JPG image with the converted PNG .
+</p>
+        </div>
+
+        <!-- Before/After Interactive Control Layout Wrap -->
+        <div id="slider-wrap" class="relative w-full aspect-video rounded-3xl overflow-hidden glass-panel border-white/10 select-none cursor-ew-resize shadow-2xl group reveal-element [transform:scale(0.98)]">
+            
+            <!-- Before Asset Block Layer -->
+            <div class="absolute inset-0 bg-[#0f0c22]">
+                <img src="julius_silver-polynesia-3021072_1920.jpg" alt="Source" class="w-full h-full object-cover">
+                <div class="absolute top-4 left-4 glass-panel bg-black/60 border-white/10 px-4 py-1.5 rounded-full text-xs font-bold text-white tracking-widest uppercase">
+                    Raw Vector Space [4.8 MB]
+                </div>
+            </div>
+
+            <!-- After Asset Split Clip Panel Layer -->
+            <div id="compressed-clip-panel" class="absolute inset-0 pointer-events-none transition-all duration-75" style="clip-path: inset(0 0 0 50%);">
+                <img src="julius_silver-polynesia-3021072_1920.jpg" alt="Compressed" class="w-full h-full object-cover filter brightness-90">
+                <div class="absolute top-4 right-4 glass-panel bg-pink-600/80 border-white/10 px-4 py-1.5 rounded-full text-xs font-bold text-white tracking-widest uppercase">
+                    V12 Engine 0.1 Target Variant [140 KB]
+                </div>
+            </div>
+
+            <!-- Interactive Handle Bar Overlay Line -->
+            <div id="slider-handle" class="absolute top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 via-pink-500 to-blue-500 left-1/2 pointer-events-none shadow-[0_0_10px_rgba(236,72,153,0.5)]">
+                <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white text-slate-950 flex items-center justify-center shadow-2xl border-4 border-[#030014]">
+                    <i data-lucide="chevrons-left-right" class="w-4 h-4"></i>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+
+
+    <!-- 7. Premium Structured Grids Feature Block Layout -->
+    <section id="features" class="py-24 max-w-7xl mx-auto px-4 relative z-10">
+        <div class="text-center space-y-4 mb-16 reveal-element [transform:translateY(20px)]">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Powerful Features</h2>
+            <p class="text-slate-400 max-w-md mx-auto">Everything you need to convert JPEG and JPG images to PNG quickly, securely, and with high-quality results.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Feature Item 1 -->
+            <div class="glass-panel-interactive rounded-2xl p-6 space-y-4 reveal-element [transform:translateY(30px)]">
+                <div class="w-11 h-11 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400"><i data-lucide="target" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-xl font-bold text-white">High-Quality PNG Conversion</h4>
+                <p class="text-slate-400 text-sm leading-relaxed">Convert JPEG and JPG images to PNG while preserving image quality, colors, and fine details.</p>
+            </div>
+            <!-- Feature Item 2 -->
+            <div class="glass-panel-interactive rounded-2xl p-6 space-y-4 reveal-element [transform:translateY(30px)] [transition-delay:0.1s]">
+                <div class="w-11 h-11 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-400"><i data-lucide="cpu" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-xl font-bold text-white">Batch Conversion</h4>
+                <p class="text-slate-400 text-sm leading-relaxed"> Convert multiple JPEG and JPG images at once and download them individually or as a ZIP archive.</p>
+            </div>
+             <div class="glass-panel-interactive rounded-2xl p-6 space-y-4 reveal-element [transform:translateY(30px)] [transition-delay:0.1s]">
+                <div class="w-11 h-11 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400"><i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-xl font-bold text-white">Browser-Based Processing</h4>
+                <p class="text-slate-400 text-sm leading-relaxed">Convert images directly on your device for fast results without uploading files to a server.</p>
+            </div>
+             <div class="glass-panel-interactive rounded-2xl p-6 space-y-4 reveal-element [transform:translateY(30px)] [transition-delay:0.1s]">
+                <div class="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400"><i data-lucide="eye" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-xl font-bold text-white">Instant Conversion</h4>
+                <p class="text-slate-400 text-sm leading-relaxed">Your images begin converting automatically as soon as they are uploaded, saving you time and extra clicks.</p>
+            </div>
+             <div class="glass-panel-interactive rounded-2xl p-6 space-y-4 reveal-element [transform:translateY(30px)] [transition-delay:0.1s]">
+                <div class="w-11 h-11 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400"><i data-lucide="binary" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-xl font-bold text-white">Fast Performance</h4>
+                <p class="text-slate-400 text-sm leading-relaxed">Optimized for speed, allowing JPEG and JPG images to be converted to PNG in just a few seconds.</p>
+            </div>
+             <div class="glass-panel-interactive rounded-2xl p-6 space-y-4 reveal-element [transform:translateY(30px)] [transition-delay:0.1s]">
+                <div class="w-11 h-11 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-400"><i data-lucide="zap" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-xl font-bold text-white">JPEG & JPG Support</h4>
+                <p class="text-slate-400 text-sm leading-relaxed">Supports both JPEG (.jpeg) and JPG (.jpg) image formats for reliable PNG conversion.</p>
+            </div>
+             <div class="glass-panel-interactive rounded-2xl p-6 space-y-4 reveal-element [transform:translateY(30px)] [transition-delay:0.1s]">
+                <div class="w-11 h-11 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400"><i data-lucide="image" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-xl font-bold text-white">High-Quality Output</h4>
+                <p class="text-slate-400 text-sm leading-relaxed">Creates clean, sharp PNG images while preserving the original appearance of your files.</p>
+            </div>
+            <!-- Feature Item 3 -->
+            <div class="glass-panel-interactive rounded-2xl p-6 space-y-4 reveal-element [transform:translateY(30px)] [transition-delay:0.2s]">
+                <div class="w-11 h-11 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400"><i data-lucide="box" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-xl font-bold text-white">Complete Privacy</h4>
+                <p class="text-slate-400 text-sm leading-relaxed">Your images are never uploaded, stored, or shared. Everything stays on your device for complete privacy and security.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 13. Dynamic Accordion FAQ Section Segment -->
+    <section id="faq" class="py-24 max-w-4xl mx-auto px-4 relative z-10">
+        <div class="text-center space-y-4 mb-16 reveal-element [transform:translateY(20px)]">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Frequently Asked Questions</h2>
+            <p class="text-slate-400 max-w-sm mx-auto">Everything you need to know about JPEG/JPG to PNG conversion, privacy, and supported image formats.</p>
+        </div>
+
+        <div class="space-y-4">
+            <!-- Accordion Item 1 -->
+            <div class="glass-panel rounded-2xl border-white/5 overflow-hidden transition-all duration-300 reveal-element [transform:translateY(20px)]">
+                <button type="button" class="w-full px-6 py-5 text-left flex items-center justify-between font-bold text-white hover:bg-white/[0.02] transition-colors faq-trigger">
+                    <span>How long does the conversion take?</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300"></i>
                 </button>
-            </div>
-            <div id="panel-count" style="display:none;">
-                <h5>Split by Page Count</h5>
-                <div class="page-count-row">
-                    <label>Pages per section:</label>
-                    <input type="number" id="pages-per-section" min="1" value="2">
+                <div class="max-h-0 overflow-hidden transition-all duration-500 ease-in-out faq-content">
+                    <div class="px-6 pb-5 pt-2 text-sm text-slate-400 leading-relaxed border-t border-white/5 bg-black/20">
+                      Most JPEG and JPG images are converted to PNG within a few seconds. The exact time depends on the image size and the number of files you're converting, but the process is designed to be fast and efficient.
+                    </div>
                 </div>
-                <div class="page-count-preview" id="count-preview">Will create — files</div>
             </div>
-            <div id="panel-pages" style="display:none;">
-                <h5>One PDF Per Page</h5>
-                <p style="font-size:13px;color:var(--gray-500);line-height:1.6;">Each page will be extracted as a separate PDF and downloaded together as a ZIP archive.</p>
-                <div id="pages-estimate" style="font-size:12px;color:var(--gray-500);margin-top:10px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;padding:8px 12px;"></div>
+
+            <!-- Accordion Item 2 -->
+            <div class="glass-panel rounded-2xl border-white/5 overflow-hidden transition-all duration-300 reveal-element [transform:translateY(20px)]">
+                <button type="button" class="w-full px-6 py-5 text-left flex items-center justify-between font-bold text-white hover:bg-white/[0.02] transition-colors faq-trigger">
+                    <span>Is my data kept private and secure?</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300"></i>
+                </button>
+                <div class="max-h-0 overflow-hidden transition-all duration-500 ease-in-out faq-content">
+                    <div class="px-6 pb-5 pt-2 text-sm text-slate-400 leading-relaxed border-t border-white/5 bg-black/20">
+                     Yes. Your images are processed entirely on your device and are never uploaded, stored, or shared with any server. This ensures your files remain private throughout the entire conversion process.
+                    </div>
+                </div>
+            </div>
+               <!-- Accordion Item 2 -->
+            <div class="glass-panel rounded-2xl border-white/5 overflow-hidden transition-all duration-300 reveal-element [transform:translateY(20px)]">
+                <button type="button" class="w-full px-6 py-5 text-left flex items-center justify-between font-bold text-white hover:bg-white/[0.02] transition-colors faq-trigger">
+                    <span>Which file formats are supported?</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300"></i>
+                </button>
+                <div class="max-h-0 overflow-hidden transition-all duration-500 ease-in-out faq-content">
+                    <div class="px-6 pb-5 pt-2 text-sm text-slate-400 leading-relaxed border-t border-white/5 bg-black/20">
+                    This tool supports both JPEG (.jpeg) and JPG (.jpg) image formats as input and converts them into high-quality PNG files. The converted images are ready to use for websites, documents, design projects, and more.
+                    </div>
+                </div>
+            </div>
+               <!-- Accordion Item 2 -->
+            <div class="glass-panel rounded-2xl border-white/5 overflow-hidden transition-all duration-300 reveal-element [transform:translateY(20px)]">
+                <button type="button" class="w-full px-6 py-5 text-left flex items-center justify-between font-bold text-white hover:bg-white/[0.02] transition-colors faq-trigger">
+                    <span>Are my images uploaded to a server?</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300"></i>
+                </button>
+                <div class="max-h-0 overflow-hidden transition-all duration-500 ease-in-out faq-content">
+                    <div class="px-6 pb-5 pt-2 text-sm text-slate-400 leading-relaxed border-t border-white/5 bg-black/20">
+                     No. All image conversion takes place directly on your device. Since your files never leave your device, you can convert your images with complete confidence and privacy.
+                    </div>
+                </div>
+            </div>
+               <!-- Accordion Item 2 -->
+            <div class="glass-panel rounded-2xl border-white/5 overflow-hidden transition-all duration-300 reveal-element [transform:translateY(20px)]">
+                <button type="button" class="w-full px-6 py-5 text-left flex items-center justify-between font-bold text-white hover:bg-white/[0.02] transition-colors faq-trigger">
+                    <span>Can I convert multiple images at once?</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300"></i>
+                </button>
+                <div class="max-h-0 overflow-hidden transition-all duration-500 ease-in-out faq-content">
+                    <div class="px-6 pb-5 pt-2 text-sm text-slate-400 leading-relaxed border-t border-white/5 bg-black/20">
+                       Yes. You can upload and convert multiple JPEG and JPG images in a single session. Once the conversion is complete, you can download each PNG individually or download all converted images together as a ZIP archive.
+                    </div>
+                </div>
             </div>
         </div>
+    </section>
 
-        <div class="progress-wrap" id="progress-wrap">
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="progress-fill"></div>
+    <!-- 14. CTA Banner Section -->
+    <section class="py-24 max-w-7xl mx-auto px-4 relative z-10 text-center">
+        <div class="glass-panel rounded-3xl border-purple-500/20 bg-gradient-to-tr from-purple-950/20 via-black/40 to-pink-950/10 p-12 relative overflow-hidden shadow-2xl space-y-6 reveal-element [transform:translateY(30px)]">
+            <div class="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 opacity-50"></div>
+            <h3 class="text-3xl sm:text-4xl font-extrabold text-white relative z-10">Convert JPEG/JPG to PNG in Seconds</h3>
+            <p class="text-slate-400 max-w-lg mx-auto relative z-10 text-base">Convert your JPEG and JPG images to high-quality PNG files with fast and secure processing.</p>
+            <div class="relative z-10 pt-4">
+                <a href="#converter" class="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-500 rounded-xl font-bold text-white inline-flex items-center gap-2 hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] hover:scale-105 transition-all duration-300">
+                    Convert Now<i data-lucide="zap" class="w-4 h-4"></i>
+                </a>
             </div>
-            <div class="progress-label" id="progress-label">Preparing…</div>
         </div>
+    </section>
 
-        <div class="action-bar" style="margin-top:16px;">
-            <div class="privacy-note">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                100% local — no uploads, no servers
+    <!-- 15. Premium Redesigned Massive Footer Section Layout Area -->
+    <footer class="bg-black/80 border-t border-white/5 pt-20 pb-10 relative z-10 px-4">
+        <div class="absolute bottom-[-10%] right-[-5%] w-[30vw] h-[30vw] bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none z-0 transition-all duration-700 group-hover/footer:bg-indigo-600/10 group-hover/footer:scale-110"></div>
+        <div class="absolute top-[-5%] left-[-5%] w-[25vw] h-[25vw] bg-pink-600/5 rounded-full blur-[80px] pointer-events-none z-0 transition-all duration-700 group-hover/footer:bg-pink-600/10 group-hover/footer:scale-110"></div>
+
+        <div class="max-w-7xl mx-auto px-6 sm:px-8 pt-16 pb-8 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-white/5">
+                
+                <div class="md:col-span-3 space-y-4">
+                    <a href="#" class="flex items-center gap-2.5 group/logo w-fit transition-all duration-300 hover:translate-x-0.5">
+                        <div class="w-8 h-8 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold shadow-md shadow-indigo-500/10 group-hover/logo:rotate-12 group-hover/logo:scale-110 group-hover/logo:shadow-indigo-500/30 transition-all duration-300">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        </div>
+                        <span class="font-display text-lg font-bold text-white tracking-tight transition-colors group-hover/logo:text-indigo-400">V12 Engine <span class="text-indigo-400 font-mono text-xs group-hover/logo:text-pink-400 transition-colors">0.1</span></span>
+                    </a>
+                    <p class="text-sm text-slate-400 leading-relaxed max-w-sm">
+                  Fast and secure image conversion running directly on your device.
+                    </p>
+                </div>
+
+                <div class="md:col-span-9 grid grid-cols-1 sm:grid-cols-3 gap-8">
+                    <div class="space-y-3 group/cat">
+                        <h4 class="text-xs font-semibold tracking-wider text-slate-300 uppercase transition-colors group-hover/cat:text-indigo-400 cursor-default">Features</h4>
+                        <ul class="space-y-2">
+                            <li><a href="f1.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">JPEG/JPG to PNG </a></li>
+                            <li><a href="f2.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">Large File Support</a></li>
+                            <li><a href="f3.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">High Quality Output</a></li>
+                            <li><a href="f4.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">Fast Processing</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-3 group/cat">
+                        <h4 class="text-xs font-semibold tracking-wider text-slate-300 uppercase transition-colors group-hover/cat:text-indigo-400 cursor-default">Privacy</h4>
+                        <ul class="space-y-2">
+                            <li><a href="f5.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">Local Processing</a></li>
+                            <li><a href="f6.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">Your Images Stay Private</a></li>
+                            <li><a href="f7.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">No Data Storage</a></li>
+                            <li><a href="f8.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">No File Uploads</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="space-y-3 group/cat">
+                        <h4 class="text-xs font-semibold tracking-wider text-slate-300 uppercase transition-colors group-hover/cat:text-pink-400 cursor-default">Resources</h4>
+                        <ul class="space-y-2">
+                            <li><a href="f9.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">FAQ</a></li>
+                            <li><a href="f10.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">Privacy Policy</a></li>
+                            <li><a href="f11.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">Terms of Use</a></li>
+                            <li><a href="f12.html" class="text-sm text-slate-400 hover:text-white hover:font-medium flex items-center gap-1 transition-all duration-200 hover:translate-x-1.5">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+
             </div>
-            <button id="split-btn" class="btn-primary">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Split &amp; Download
-            </button>
+
+        <!-- Lower Bounds Bar -->
+        <div class="relative flex flex-col sm:flex-row items-center justify-center pt-8 text-xs text-slate-500 w-full min-h-[44px]">
+                <p class="text-center transition-colors duration-300 hover:text-slate-400 cursor-default">
+                    © <span id="footerYear">2026</span> V12 Engine. Secure local browser utilities.
+                </p>
         </div>
-    </div>
-</section>
-
-<section id="how-it-works" style="background:var(--gray-50); border-top:1px solid var(--gray-200); border-bottom:1px solid var(--gray-200);">
-    <div class="section">
-        <div class="section-header"><h2>How It Works</h2><p>Four simple steps — done in seconds.</p></div>
-        <div class="steps-grid">
-            <div class="step-card"><div class="step-num">Step 01</div><div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><h4>Upload Your PDF</h4><p>Drag and drop or click to select any PDF file from your device.</p></div>
-            <div class="step-card"><div class="step-num">Step 02</div><div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg></div><h4>Choose Split Mode</h4><p>Pick custom ranges, equal sections, or one page per file.</p></div>
-            <div class="step-card"><div class="step-num">Step 03</div><div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h4>Preview Pages</h4><p>See thumbnails of every page to confirm your selection.</p></div>
-            <div class="step-card"><div class="step-num">Step 04</div><div class="step-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><h4>Download</h4><p>Get your split PDFs instantly — single file or ZIP archive.</p></div>
         </div>
-    </div>
-</section>
+    </footer>
 
-<div class="features-bg">
-    <div id="features" class="section">
-        <div class="section-header"><h2>Why Use V12 Engine?</h2><p>Built for speed, privacy, and quality.</p></div>
-        <div class="features-grid">
-            <div class="feature-card"><div class="feature-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h4>100% Private</h4><p>Your PDF never leaves your device. All processing runs in the browser.</p></div>
-            <div class="feature-card"><div class="feature-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><h4>Blazing Fast</h4><p>No server roundtrips. Split even large PDFs in a fraction of a second.</p></div>
-            <div class="feature-card"><div class="feature-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><h4>Lossless Quality</h4><p>Output PDFs retain the original resolution, fonts, and formatting perfectly.</p></div>
-            <div class="feature-card"><div class="feature-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="6" height="18" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="16" y="3" width="6" height="18" rx="1"/></svg></div><h4>Flexible Modes</h4><p>Custom ranges, page count splits, or one-page files — your choice.</p></div>
-        </div>
-    </div>
-</div>
 
-<section id="faq" style="padding: 60px 20px;">
-    <div class="section-header" style="max-width:680px; margin: 0 auto 32px;"><h2>Frequently Asked Questions</h2><p>Everything you need to know about splitting PDFs.</p></div>
-    <div class="faq-list">
-        <div class="faq-item"><button class="faq-trigger" type="button">Is my PDF sent to a server?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-content"><p>No. Everything runs locally in your browser using PDF.js and pdf-lib. Your file never touches any server.</p></div></div>
-        <div class="faq-item"><button class="faq-trigger" type="button">Can I split a password-protected PDF?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-content"><p>Password-protected PDFs must be unlocked first. Open in your system viewer, print to PDF to create an unlocked copy, then upload it here.</p></div></div>
-        <div class="faq-item"><button class="faq-trigger" type="button">How do I get multiple files back?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-content"><p>When splitting into more than one file, all results are bundled into a ZIP archive. Single-file splits download directly as a PDF.</p></div></div>
-        <div class="faq-item"><button class="faq-trigger" type="button">Will the output quality be the same?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-content"><p>Yes — pdf-lib extracts pages from the original PDF binary without any re-rendering. Fonts, images, and vectors are identical to the source.</p></div></div>
-    </div>
-</section>
 
-<div style="background:var(--gray-50); border-top:1px solid var(--gray-200);">
-    <div class="cta-section">
-        <h2>Split Your PDF in Seconds</h2>
-        <p>Free, private, and instant. No account needed.</p>
-        <a href="#tool" class="btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Split Now — It's Free</a>
-    </div>
-</div>
+    <!-- Reactive Parallel Pipeline Engine Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
 
-<footer>
-    <div class="footer-inner">
-        <div class="footer-top">
-            <div class="footer-brand">
-                <a href="#" class="logo" style="margin-bottom:0;"><div class="logo-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>V12 Engine</a>
-                <p>Fast, free, and secure PDF tools running entirely in your browser.</p>
-            </div>
-            <div class="footer-col"><h5>Tools</h5><ul><li><a href="#">Split PDF</a></li><li><a href="#">Merge PDF</a></li><li><a href="#">Compress PDF</a></li><li><a href="#">Image Compressor</a></li></ul></div>
-            <div class="footer-col"><h5>Privacy</h5><ul><li><a href="#">Local Processing</a></li><li><a href="#">No Data Storage</a></li><li><a href="#">No File Uploads</a></li></ul></div>
-            <div class="footer-col"><h5>Resources</h5><ul><li><a href="#faq">FAQ</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Use</a></li><li><a href="#">Contact</a></li></ul></div>
-        </div>
-        <div class="footer-bottom">© <span id="footer-year"></span> V12 Engine. All rights reserved.</div>
-    </div>
-</footer>
+            // Preloader Frame Handler
+            const preloader = document.getElementById('preloader');
+            setTimeout(() => {
+                if(preloader) {
+                    preloader.classList.add('opacity-0');
+                    setTimeout(() => preloader.remove(), 700);
+                }
+            }, 1000);
 
-<div class="toast" id="toast"></div>
+            // Tracklight Mouse Glow Handler (With RequestAnimationFrame for Performance)
+            const cursorGlow = document.getElementById('cursor-glow');
+            if (window.matchMedia('(pointer: fine)').matches && cursorGlow) {
+                cursorGlow.style.display = 'block';
+                let mouseX = 0, mouseY = 0;
+                
+                window.addEventListener('mousemove', (e) => {
+                    mouseX = e.clientX;
+                    mouseY = e.clientY;
+                });
 
-<script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-document.getElementById('footer-year').textContent = new Date().getFullYear();
+                function updateCursorGlow() {
+                    cursorGlow.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate3d(-50%, -50%, 0)`;
+                    requestAnimationFrame(updateCursorGlow);
+                }
+                requestAnimationFrame(updateCursorGlow);
+            }
 
-// ── STATE ──
-let pdfJsDoc = null;
-let rawPdfBytes = null;
-let totalPages = 0;
-let currentMode = 'ranges';
-let rangeCounter = 0;
-
-// ── TOAST ──
-function showToast(msg, dur = 3200) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), dur);
-}
-
-// ── FAQ ──
-document.querySelectorAll('.faq-trigger').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const content = btn.nextElementSibling;
-        const isOpen = btn.classList.contains('open');
-        document.querySelectorAll('.faq-trigger').forEach(b => { b.classList.remove('open'); b.nextElementSibling.style.maxHeight = '0'; });
-        if (!isOpen) { btn.classList.add('open'); content.style.maxHeight = content.scrollHeight + 'px'; }
-    });
-});
-
-// ── DRAG/DROP ──
-const dropzone = document.getElementById('dropzone');
-['dragenter','dragover'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('drag-over'); }));
-['dragleave','drop'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.remove('drag-over'); }));
-dropzone.addEventListener('drop', e => { if (e.dataTransfer.files.length) loadPDF(e.dataTransfer.files[0]); });
-document.getElementById('file-input').addEventListener('change', e => { if (e.target.files.length) loadPDF(e.target.files[0]); });
-
-document.getElementById('change-file-btn').addEventListener('click', () => {
-    document.getElementById('workspace').classList.remove('visible');
-    dropzone.style.display = '';
-    pdfJsDoc = null; rawPdfBytes = null; totalPages = 0;
-    document.getElementById('file-input').value = '';
-    document.getElementById('ranges-list').innerHTML = '';
-    rangeCounter = 0;
-    hideProgress();
-});
-
-// ── LOAD PDF ──
-async function loadPDF(file) {
-    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
-        showToast('Please select a PDF file.'); return;
-    }
-    dropzone.style.display = 'none';
-    const ws = document.getElementById('workspace');
-    ws.classList.add('visible');
-    document.getElementById('file-name').textContent = file.name;
-    document.getElementById('file-meta').textContent = 'Loading…';
-    document.getElementById('page-count-label').textContent = '';
-    document.getElementById('page-strip').innerHTML = '<div class="pages-loading">Rendering pages…</div>';
-
-    rawPdfBytes = new Uint8Array(await file.arrayBuffer());
-
-    // Load with PDF.js for preview
-    const loadTask = pdfjsLib.getDocument({ data: rawPdfBytes.slice(0) }); // rawPdfBytes is Uint8Array
-    pdfJsDoc = await loadTask.promise;
-    totalPages = pdfJsDoc.numPages;
-
-    const sizeStr = file.size >= 1048576
-        ? (file.size / 1048576).toFixed(2) + ' MB'
-        : (file.size / 1024).toFixed(1) + ' KB';
-
-    document.getElementById('file-meta').textContent = `${totalPages} page${totalPages !== 1 ? 's' : ''} · ${sizeStr}`;
-    document.getElementById('page-count-label').textContent = `${totalPages} pages`;
-
-    // Init first range
-    if (document.getElementById('ranges-list').children.length === 0) {
-        addRangeRow(1, totalPages);
-    } else {
-        document.querySelectorAll('.range-to').forEach(i => { if (parseInt(i.value) > totalPages) i.value = totalPages; });
-    }
-
-    await renderThumbnails();
-    updateModeUI();
-
-    // Auto-scroll to workspace (file info bar area)
-    setTimeout(() => {
-        document.querySelector('.file-info-bar').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-}
-
-// ── THUMBNAILS (high quality, 2× render) ──
-async function renderThumbnails() {
-    const strip = document.getElementById('page-strip');
-    strip.innerHTML = '';
-
-    for (let i = 1; i <= totalPages; i++) {
-        const thumb = document.createElement('div');
-        thumb.className = 'page-thumb';
-        thumb.dataset.page = i;
-
-        const canvas = document.createElement('canvas');
-        thumb.appendChild(canvas);
-
-        const lbl = document.createElement('div');
-        lbl.className = 'thumb-label';
-        lbl.textContent = 'Page ' + i;
-        thumb.appendChild(lbl);
-
-        strip.appendChild(thumb);
-
-        // render async immediately
-        (async (pageNum, cvs) => {
-            const page = await pdfJsDoc.getPage(pageNum);
-            const vp = page.getViewport({ scale: 1 });
-            // Render at 2x for retina sharpness, display at 110px wide
-            const targetPx = 280; // 140 * 2
-            const scale = targetPx / vp.width;
-            const scaledVP = page.getViewport({ scale });
-            cvs.width  = scaledVP.width;
-            cvs.height = scaledVP.height;
-            const ctx = cvs.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, cvs.width, cvs.height);
-            await page.render({ canvasContext: ctx, viewport: scaledVP }).promise;
-        })(i, canvas);
-    }
-
-    setTimeout(highlightThumbs, 100);
-}
-
-// ── HIGHLIGHT ──
-function highlightThumbs() {
-    const highlighted = getHighlightedSet();
-    document.querySelectorAll('.page-thumb').forEach(t => {
-        t.classList.toggle('highlighted', highlighted.has(parseInt(t.dataset.page)));
-    });
-}
-
-function getHighlightedSet() {
-    const s = new Set();
-    if (currentMode === 'ranges') {
-        document.querySelectorAll('#ranges-list .range-row').forEach(row => {
-            let from = parseInt(row.querySelector('.range-from').value) || 1;
-            let to   = parseInt(row.querySelector('.range-to').value) || 1;
-            from = Math.max(1, Math.min(from, totalPages));
-            to   = Math.max(1, Math.min(to,   totalPages));
-            if (from > to) [from, to] = [to, from];
-            for (let p = from; p <= to; p++) s.add(p);
-        });
-    } else {
-        for (let p = 1; p <= totalPages; p++) s.add(p);
-    }
-    return s;
-}
-
-// ── RANGE ROWS ──
-function addRangeRow(from, to) {
-    rangeCounter++;
-    const idx = rangeCounter;
-    const list = document.getElementById('ranges-list');
-    const row = document.createElement('div');
-    row.className = 'range-row';
-    row.innerHTML = `
-        <label>Part ${list.children.length + 1}</label>
-        <div class="range-inputs">
-            <input type="number" class="range-from" min="1" max="${totalPages || 9999}" value="${from}">
-            <span class="dash">–</span>
-            <input type="number" class="range-to" min="1" max="${totalPages || 9999}" value="${to || totalPages || 1}">
-        </div>
-        <input type="text" class="range-name-input" placeholder="Custom file name (optional)">
-        <button class="btn-icon remove-range-btn" title="Remove">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>`;
-    row.querySelector('.range-from').addEventListener('input', highlightThumbs);
-    row.querySelector('.range-to').addEventListener('input', highlightThumbs);
-    row.querySelector('.remove-range-btn').addEventListener('click', () => {
-        row.remove(); renumberRanges(); highlightThumbs();
-    });
-    list.appendChild(row);
-    highlightThumbs();
-}
-
-function renumberRanges() {
-    document.querySelectorAll('#ranges-list .range-row').forEach((r, i) => { r.querySelector('label').textContent = `Part ${i+1}`; });
-}
-
-document.getElementById('add-range-btn').addEventListener('click', () => {
-    const rows = document.querySelectorAll('#ranges-list .range-row');
-    const lastTo = rows.length ? parseInt(rows[rows.length - 1].querySelector('.range-to').value) || 1 : 0;
-    const newFrom = Math.min(lastTo + 1, totalPages || 1);
-    addRangeRow(newFrom, totalPages || newFrom);
-});
-
-// ── MODE TABS ──
-document.querySelectorAll('.mode-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        currentMode = tab.dataset.mode;
-        updateModeUI();
-        highlightThumbs();
-    });
-});
-
-function updateModeUI() {
-    document.getElementById('panel-ranges').style.display = currentMode === 'ranges' ? '' : 'none';
-    document.getElementById('panel-count').style.display  = currentMode === 'count'  ? '' : 'none';
-    document.getElementById('panel-pages').style.display  = currentMode === 'pages'  ? '' : 'none';
-    if (currentMode === 'count') updateCountPreview();
-    if (currentMode === 'pages' && totalPages) {
-        document.getElementById('pages-estimate').textContent = `Will create ${totalPages} individual PDF file${totalPages !== 1 ? 's' : ''} — downloaded as a single ZIP archive.`;
-    }
-}
-
-document.getElementById('pages-per-section').addEventListener('input', () => { updateCountPreview(); highlightThumbs(); });
-function updateCountPreview() {
-    const n = Math.max(1, parseInt(document.getElementById('pages-per-section').value) || 1);
-    const files = totalPages ? Math.ceil(totalPages / n) : '—';
-    document.getElementById('count-preview').textContent = `Will create ${files} file${files !== 1 ? 's' : ''} · ${n} page${n !== 1 ? 's' : ''} each`;
-}
-
-// ── PROGRESS ──
-function setProgress(pct, label) {
-    document.getElementById('progress-wrap').classList.add('visible');
-    document.getElementById('progress-fill').style.width = pct + '%';
-    document.getElementById('progress-label').textContent = label;
-}
-function hideProgress() {
-    document.getElementById('progress-wrap').classList.remove('visible');
-    document.getElementById('progress-fill').style.width = '0%';
-}
-
-// ── DOWNLOAD HELPER ──
-function triggerDownload(data, filename, mime) {
-    const blob = new Blob([data], { type: mime });
-    const url  = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 15000);
-}
-
-function stripExt(name) { return name.replace(/\.pdf$/i, ''); }
-
-// ── SPLIT ENGINE (uses pdf-lib — lossless, preserves text/vectors/fonts) ──
-async function splitPDF(pageGroups) {
-    // pageGroups: [{indices: [0,1,2], name: 'output1'}, ...]
-    // indices are 0-based
-    const { PDFDocument } = PDFLib;
-    // Load source PDF - rawPdfBytes is Uint8Array
-    const srcDoc = await PDFDocument.load(rawPdfBytes, { ignoreEncryption: true });
-    const results = [];
-
-    for (let g = 0; g < pageGroups.length; g++) {
-        const grp = pageGroups[g];
-        setProgress(10 + Math.round((g / pageGroups.length) * 80), `Creating ${grp.name}.pdf…`);
-
-        const newDoc = await PDFDocument.create();
-        // copyPages takes 0-based indices
-        const validIndices = grp.indices.filter(i => i >= 0 && i < srcDoc.getPageCount());
-        if (validIndices.length === 0) continue;
-        const copiedPages = await newDoc.copyPages(srcDoc, validIndices);
-        copiedPages.forEach(p => newDoc.addPage(p));
-        const pdfBytes = await newDoc.save();
-        results.push({ name: grp.name + '.pdf', data: pdfBytes });
-    }
-
-    return results;
-}
-
-// ── SPLIT BUTTON ──
-document.getElementById('split-btn').addEventListener('click', async () => {
-    if (!rawPdfBytes || !pdfJsDoc) { showToast('Please upload a PDF first.'); return; }
-
-    const btn = document.getElementById('split-btn');
-    btn.disabled = true;
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg> Processing…`;
-
-    try {
-        const fname = document.getElementById('file-name').textContent;
-        const base  = stripExt(fname);
-        let groups  = [];
-
-        if (currentMode === 'ranges') {
-            const rows = document.querySelectorAll('#ranges-list .range-row');
-            if (!rows.length) { showToast('Add at least one range.'); return; }
-            rows.forEach((row, i) => {
-                let from = parseInt(row.querySelector('.range-from').value);
-                let to   = parseInt(row.querySelector('.range-to').value);
-                from = Math.max(1, Math.min(from, totalPages));
-                to   = Math.max(1, Math.min(to,   totalPages));
-                if (from > to) [from, to] = [to, from];
-                const customName = row.querySelector('.range-name-input').value.trim();
-                const name = customName || `V12-Engine-Split-Batch_pages_${from}-${to}`;
-                const indices = [];
-                for (let p = from - 1; p <= to - 1; p++) indices.push(p);
-                groups.push({ indices, name });
+            // Scroll Progress Indicator Tracker
+            const scrollProgress = document.getElementById('scroll-progress');
+            window.addEventListener('scroll', () => {
+                if (scrollProgress) {
+                    const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+                    const progress = totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0;
+                    scrollProgress.style.width = `${progress}%`;
+                }
             });
-        } else if (currentMode === 'count') {
-            const n = Math.max(1, parseInt(document.getElementById('pages-per-section').value) || 1);
-            for (let p = 0; p < totalPages; p += n) {
-                const end = Math.min(p + n, totalPages);
-                const indices = [];
-                for (let i = p; i < end; i++) indices.push(i);
-                groups.push({ indices, name: `V12-Engine-Split-Batch_part${Math.floor(p / n) + 1}` });
+
+            // Reveal Animation Intersection Observer
+            const revealElements = document.querySelectorAll('.reveal-element');
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                    }
+                });
+            }, { threshold: 0.05 });
+            revealElements.forEach(el => revealObserver.observe(el));
+
+            // Core State Parameters
+            let fileQueue = [];
+            let currentUiProgress = 0;
+            let targetProgress = 0;
+            let progressAnimationId = null;
+            let statusRotationInterval = null;
+
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('file-input');
+            const queueWrapper = document.getElementById('queue-wrapper');
+            const queueContainer = document.getElementById('queue-container');
+            const queueCountLabel = document.getElementById('queue-count');
+            const clearQueueBtn = document.getElementById('clear-queue-btn');
+            const downloadAllBtn = document.getElementById('download-all-btn');
+            const downloadIndividuallyBtn = document.getElementById('download-individually-btn');
+            
+            const globalBar = document.getElementById('global-processing-bar');
+            const globalFill = document.getElementById('global-progress-fill');
+            const globalPercent = document.getElementById('global-percentage');
+            const statusText = document.getElementById('engine-status-text');
+            const statusDot = document.getElementById('engine-status-dot');
+
+            // Exact Status Loop Pattern
+            const structuralStatusLoop = [
+                "Read Images",
+                "Update Progress",
+                "Create Preview",
+                "Update Progress",
+                "Convert Image",
+                "Update Progress"
+            ];
+
+            dropzone.addEventListener('click', () => fileInput.click());
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('border-purple-500/70', 'bg-purple-950/20');
+                });
+            });
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('border-purple-500/70', 'bg-purple-950/20');
+                });
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                handleIncomingFiles(e.dataTransfer.files);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                handleIncomingFiles(e.target.files);
+            });
+
+            function getShortenedName(name) {
+                const dotsPos = name.lastIndexOf('.');
+                const baseName = dotsPos !== -1 ? name.substring(0, dotsPos) : name;
+                if (baseName.length > 25) {
+                    return baseName.substring(0, 25) + '...';
+                }
+                return baseName + '...';
             }
-        } else {
-            for (let p = 0; p < totalPages; p++) {
-                groups.push({ indices: [p], name: `V12-Engine-Split-Batch_page${p + 1}` });
+
+            function handleIncomingFiles(files) {
+                const incomingArr = Array.from(files).filter(file => file.type === 'image/jpeg' || file.type === 'image/jpg' || file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg'));
+                if (incomingArr.length === 0) return;
+
+                cancelAnimationFrame(progressAnimationId);
+                clearInterval(statusRotationInterval);
+                currentUiProgress = 0;
+                targetProgress = 0;
+
+                globalBar.classList.remove('hidden');
+                globalBar.className = "glass-panel border-purple-500/30 bg-purple-950/10 rounded-2xl p-4 flex flex-col gap-2 relative overflow-hidden shadow-inner transition-all duration-300";
+                globalPercent.className = "text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-extrabold text-sm";
+                globalPercent.innerText = "0%";
+                globalFill.style.width = "0%";
+                
+                statusDot.className = "w-2 h-2 rounded-full bg-pink-500 animate-ping";
+                
+                let statusIdx = 0;
+                statusText.innerText = structuralStatusLoop[statusIdx];
+
+                statusRotationInterval = setInterval(() => {
+                    const working = fileQueue.some(item => item.status === 'converting');
+                    if (working) {
+                        statusIdx = (statusIdx + 1) % structuralStatusLoop.length;
+                        statusText.innerText = structuralStatusLoop[statusIdx];
+                    }
+                }, 800);
+
+                incomingArr.forEach(file => {
+                    if (!fileQueue.some(queued => queued.file.name === file.name && queued.file.size === file.size)) {
+                        const id = 'asset_' + Math.random().toString(36).substr(2, 9);
+                        const origExt = file.name.split('.').pop().toUpperCase();
+                        const extensionTag = (origExt === 'JPEG' || origExt === 'JPG') ? origExt : 'JPG';
+
+                        const queueObject = {
+                            id: id,
+                            file: file,
+                            status: 'converting', 
+                            objectUrl: URL.createObjectURL(file),
+                            convertedBlob: null,
+                            convertedName: file.name.replace(/\.(jpg|jpeg)$/i, '') + '.png',
+                            extensionTag: extensionTag
+                        };
+                        fileQueue.push(queueObject);
+                    }
+                });
+                
+                renderQueueUI();
+                startFluidLinearUIProgress();
+
+                fileQueue.forEach(item => {
+                    if (item.status === 'converting' && !item.convertedBlob) {
+                        setTimeout(() => { processSingleFileParallel(item); }, 40);
+                    }
+                });
             }
-        }
 
-        if (!groups.length) { showToast('Nothing to split.'); return; }
+            // High-fidelity progress interpolation timeline using custom cubic acceleration curves
+            function startFluidLinearUIProgress() {
+                function runTicker() {
+                    const allDone = fileQueue.every(item => item.status === 'completed' || item.status === 'failed');
+                    
+                    if (!allDone) {
+                        // Rapid continuous surge phase up to the 85% processing horizon
+                        if (targetProgress < 85) {
+                            targetProgress += 1.8; 
+                        } else if (targetProgress < 99) {
+                            targetProgress += 0.15; // Graceful crawl to await background task finalization
+                        }
+                    } else {
+                        targetProgress = 100;
+                    }
 
-        setProgress(5, 'Loading PDF…');
-        const results = await splitPDF(groups);
-        setProgress(92, 'Preparing download…');
+                    // Linear interpolation matching modern display frequencies
+                    const difference = targetProgress - currentUiProgress;
+                    if (difference > 0.01) {
+                        // Higher division values result in smoother, physics-weighted decelerations near targets
+                        currentUiProgress += difference * 0.085;
+                    } else {
+                        currentUiProgress = targetProgress;
+                    }
 
-        if (results.length === 1) {
-            triggerDownload(results[0].data, results[0].name, 'application/pdf');
-            setProgress(100, 'Done!');
-            showToast('✓ PDF split and downloaded!');
-        } else {
-            const zip = new JSZip();
-            results.forEach(r => zip.file(r.name, r.data));
-            setProgress(96, 'Creating ZIP…');
-            const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 3 } });
-            triggerDownload(zipBlob, `V12-Engine-Split-Batch.zip`, 'application/zip');
-            setProgress(100, 'Done!');
-            showToast(`✓ ${results.length} PDFs downloaded as ZIP!`);
-        }
+                    const displayPct = Math.min(Math.floor(currentUiProgress), 100);
+                    globalFill.style.width = `${currentUiProgress}%`;
+                    globalPercent.innerText = `${displayPct}%`;
 
-        setTimeout(hideProgress, 2500);
+                    if (displayPct >= 100 && allDone && Math.abs(currentUiProgress - 100) < 0.1) {
+                        globalFill.style.width = "100%";
+                        globalPercent.innerText = "100%";
+                        handleTerminalPipelineCompletion();
+                    } else {
+                        progressAnimationId = requestAnimationFrame(runTicker);
+                    }
+                }
+                progressAnimationId = requestAnimationFrame(runTicker);
+            }
 
-    } catch (err) {
-        console.error(err);
-        showToast('Error: ' + (err.message || 'Something went wrong. Try again.'));
-        hideProgress();
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Split &amp; Download`;
-    }
-});
-</script>
+            function processSingleFileParallel(item) {
+                const img = new Image();
+                img.onload = () => {
+                    setTimeout(() => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.naturalWidth;
+                        canvas.height = img.naturalHeight;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+
+                        canvas.toBlob((blob) => {
+                            if (blob) {
+                                item.convertedBlob = blob;
+                                item.status = 'completed';
+                                
+                                const badgeRow = document.getElementById(`badge_${item.id}`);
+                                if (badgeRow) {
+                                    badgeRow.className = "px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 shadow-sm";
+                                    badgeRow.innerHTML = `<i data-lucide="check" class="w-2.5 h-2.5"></i> PNG Ready`;
+                                    lucide.createIcons();
+                                }
+                            } else {
+                                item.status = 'failed';
+                            }
+                        }, 'image/png');
+                    }, 10);
+                };
+
+                img.onerror = () => {
+                    item.status = 'failed';
+                };
+                img.src = item.objectUrl;
+            }
+
+            function handleTerminalPipelineCompletion() {
+                cancelAnimationFrame(progressAnimationId);
+                clearInterval(statusRotationInterval);
+                
+                const completedItems = fileQueue.filter(i => i.status === 'completed').length;
+                statusText.innerText = `Conversion Complete (${completedItems}/${fileQueue.length} Success)`;
+                
+                statusDot.className = "w-2 h-2 rounded-full bg-pink-500";
+                
+                if (completedItems > 0) {
+                    downloadAllBtn.removeAttribute('disabled');
+                    downloadAllBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                    downloadIndividuallyBtn.removeAttribute('disabled');
+                    downloadIndividuallyBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                }
+            }
+
+            function renderQueueUI() {
+                if (fileQueue.length === 0) {
+                    queueWrapper.classList.add('hidden');
+                    globalBar.classList.add('hidden');
+                    return;
+                }
+
+                queueWrapper.classList.remove('hidden');
+                queueCountLabel.innerText = `Converted Images (${fileQueue.length})`;
+                queueContainer.innerHTML = '';
+
+                fileQueue.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = "flex flex-col p-3.5 rounded-xl bg-white/[0.01] border border-white/5 hover:border-purple-500/20 hover:bg-white/[0.03] transition-all duration-300 shadow-sm gap-3";
+                    
+                    let badgeHTML = '';
+                    if (item.status === 'converting') {
+                        badgeHTML = `<span id="badge_${item.id}" class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-purple-500/5 text-purple-400/80 border border-purple-500/15 flex items-center gap-1">PROCESSING</span>`;
+                    } else if (item.status === 'completed') {
+                        badgeHTML = `<span id="badge_${item.id}" class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 shadow-sm"><i data-lucide="check" class="w-2.5 h-2.5"></i> PNG Ready</span>`;
+                    } else {
+                        badgeHTML = `<span id="badge_${item.id}" class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">Failed</span>`;
+                    }
+                    
+                    const safelyTruncatedName = getShortenedName(item.file.name);
+
+                    row.innerHTML = `
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-3 min-w-0 flex-1">
+                                <div class="w-12 h-12 rounded-lg bg-black/40 border border-white/10 overflow-hidden flex items-center justify-center shrink-0 shadow-inner">
+                                    <img src="${item.objectUrl}" alt="Thumbnail" class="w-full h-full object-cover">
+                                </div>
+                                <div class="min-w-0 flex-1 flex flex-col justify-center">
+                                    <p class="text-xs font-bold text-white truncate tracking-wide leading-tight">${safelyTruncatedName}</p>
+                                    <div class="text-[11px] font-semibold tracking-wider text-slate-500 uppercase mt-1 flex items-center gap-1.5 leading-none">
+                                        <span>${item.extensionTag}</span>
+                                        <span class="text-pink-500 flex items-center justify-center w-3 h-3">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-3 h-3">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                            </svg>
+                                        </span>
+                                        <span class="text-pink-400 font-bold">PNG</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 shrink-0">
+                                ${badgeHTML}
+                                <div class="flex items-center">
+                                    <button data-id="${item.id}" class="remove-asset-btn px-3 py-1.5 rounded-xl bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 border border-pink-500/25 transition-all flex items-center gap-1.5 text-[11px] font-bold tracking-wide shadow-sm cursor-pointer">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                        <span class="default-text">Delete Image</span>
+                                        <span class="hover-text">Delete this image</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    queueContainer.appendChild(row);
+                });
+
+                lucide.createIcons();
+                bindDynamicRowActions();
+            }
+
+            function bindDynamicRowActions() {
+                document.querySelectorAll('.remove-asset-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const targetId = btn.getAttribute('data-id');
+                        const index = fileQueue.findIndex(i => i.id === targetId);
+                        if (index !== -1) {
+                            if(fileQueue[index].objectUrl) URL.revokeObjectURL(fileQueue[index].objectUrl);
+                            fileQueue.splice(index, 1);
+                            renderQueueUI();
+                            
+                            const working = fileQueue.some(item => item.status === 'converting');
+                            if (!working) {
+                                handleTerminalPipelineCompletion();
+                            }
+                        }
+                    });
+                });
+            }
+
+            downloadIndividuallyBtn.addEventListener('click', () => {
+                const completedItems = fileQueue.filter(i => i.status === 'completed' && i.convertedBlob);
+                if(completedItems.length === 0) return;
+
+                completedItems.forEach((item, index) => {
+                    setTimeout(() => {
+                        const fileUrl = URL.createObjectURL(item.convertedBlob);
+                        const downloadTrigger = document.createElement('a');
+                        downloadTrigger.href = fileUrl;
+                        downloadTrigger.download = item.convertedName;
+                        downloadTrigger.click();
+                        setTimeout(() => URL.revokeObjectURL(fileUrl), 60000);
+                    }, index * 200);
+                });
+            });
+
+            downloadAllBtn.addEventListener('click', async () => {
+                const completedItems = fileQueue.filter(i => i.status === 'completed' && i.convertedBlob);
+                if(completedItems.length === 0) return;
+
+                downloadAllBtn.setAttribute('disabled', 'true');
+                downloadAllBtn.innerHTML = `<i class="w-4 h-4 text-white animate-spin border-2 border-white/20 border-t-white rounded-full"></i> Building ZIP...`;
+
+                const zip = new JSZip();
+                const usedNames = {}; 
+
+                completedItems.forEach(item => {
+                    let finalName = item.convertedName;
+                    if (usedNames[finalName]) {
+                        const dotIndex = finalName.lastIndexOf('.');
+                        const base = finalName.substring(0, dotIndex);
+                        const ext = finalName.substring(dotIndex);
+                        let counter = 1;
+                        while (usedNames[`${base} (${counter})${ext}`]) {
+                            counter++;
+                        }
+                        finalName = `${base} (${counter})${ext}`;
+                    }
+                    usedNames[finalName] = true;
+                    zip.file(finalName, item.convertedBlob);
+                });
+
+                try {
+                    const contentBlob = await zip.generateAsync({ type: "blob" });
+                    const zipUrl = URL.createObjectURL(contentBlob);
+                    
+                    const triggerLink = document.createElement('a');
+                    triggerLink.download = 'V12-Engine-Batch.zip';
+                    triggerLink.href = zipUrl;
+                    triggerLink.click();
+                    
+                    setTimeout(() => URL.revokeObjectURL(zipUrl), 60000);
+                } catch (err) {
+                    console.error("ZIP packaging fault profile:", err);
+                } finally {
+                    downloadAllBtn.removeAttribute('disabled');
+                    downloadAllBtn.innerHTML = `<i data-lucide="archive" class="w-4 h-4"></i> Download Batch Archive (.ZIP)`;
+                    lucide.createIcons();
+                }
+            });
+
+
+            clearQueueBtn.addEventListener('click', () => {
+                cancelAnimationFrame(progressAnimationId);
+                clearInterval(statusRotationInterval);
+                fileQueue.forEach(item => {
+                    if (item.objectUrl) URL.revokeObjectURL(item.objectUrl);
+                });
+                fileQueue = [];
+                currentUiProgress = 0;
+                targetProgress = 0;
+                renderQueueUI();
+                fileInput.value = '';
+            });
+        });
+
+          // 8. Before/After Interactive Comparison Slider Math Controls
+            const sliderWrap = document.getElementById('slider-wrap');
+            const clipPanel = document.getElementById('compressed-clip-panel');
+            const handle = document.getElementById('slider-handle');
+
+            if (sliderWrap && clipPanel && handle) {
+                const moveSlider = (clientX) => {
+                    const rect = sliderWrap.getBoundingClientRect();
+                    const x = clientX - rect.left;
+                    let percentage = (x / rect.width) * 100;
+                    if (percentage < 0) percentage = 0;
+                    if (percentage > 100) percentage = 100;
+
+                    clipPanel.style.clipPath = `inset(0 0 0 ${percentage}%)`;
+                    handle.style.left = `${percentage}%`;
+                };
+
+                sliderWrap.addEventListener('mousemove', (e) => {
+                    if (e.buttons === 1 || e.type === 'mousemove') { // Drag or just mouse over moving tracking
+                        moveSlider(e.clientX);
+                    }
+                });
+
+                sliderWrap.addEventListener('touchmove', (e) => {
+                    if (e.touches[0]) {
+                        moveSlider(e.touches[0].clientX);
+                    }
+                });
+            }
+
+         // 13. FAQ Accordion Height Toggle Logic Architecture
+            document.querySelectorAll('.faq-trigger').forEach(trigger => {
+                trigger.addEventListener('click', () => {
+                    const container = trigger.closest('.glass-panel');
+                    const content = container.querySelector('.faq-content');
+                    const icon = trigger.querySelector('[data-lucide="chevron-down"]');
+                    
+                    if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+                        content.style.maxHeight = '0px';
+                        if (icon) icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        // Close all others first optionally
+                        document.querySelectorAll('.faq-content').forEach(c => c.style.maxHeight = '0px');
+                        document.querySelectorAll('.faq-trigger i').forEach(i => i.style.transform = 'rotate(0deg)');
+                        
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        if (icon) icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+        
+    </script>
+
+
+
+
+
+
+
+
+
+
+
 </body>
 </html>
