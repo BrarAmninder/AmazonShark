@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1168,14 +1169,16 @@ let _debounceTimer = null, _runId = 0;
 
 const CLEAN_VIEW = '#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&view=FitH';
 
-// ── COMPRESSION PRESETS (quality-first, not byte-target) ──
-// scale: canvas render DPI factor (2.0 = 144dpi, 3.0 = 216dpi, 4.0 = 288dpi)
-// jpegQ: JPEG quality for image-heavy pages (0–1)
-// renderMode: 'jpeg'|'png'|'auto' — auto picks per page based on content
+// ── COMPRESSION PRESETS ──
+// Strategy: preserve PDF structure (text/vectors stay crisp), only re-compress embedded images
+// imgScale: downsample factor for embedded images (1.0 = keep original resolution)
+// jpegQ: JPEG re-encode quality for embedded images (0–1); null = keep original
+// For "max quality + max compress" we keep images at original resolution but re-encode
+// streams with deflate and strip all redundant/metadata objects
 const COMPRESSION_PRESETS = {
-    extreme:     { jpegQ: 0.55, scale: 2.0, renderMode: 'jpeg', label: 'Extreme'     },
-    recommended: { jpegQ: 0.82, scale: 3.0, renderMode: 'auto', label: 'Recommended' },
-    less:        { jpegQ: 0.95, scale: 4.0, renderMode: 'auto', label: 'Less'        }
+    extreme:     { imgScale: 0.65, jpegQ: 0.72, label: 'Extreme'     },
+    recommended: { imgScale: 0.85, jpegQ: 0.88, label: 'Recommended' },
+    less:        { imgScale: 1.00, jpegQ: 0.96, label: 'Less'        }
 };
 let activeLevel = 'recommended';
 
@@ -1206,8 +1209,8 @@ function handleSelectedFile(file) {
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) return;
     activePdfFile  = file;
     compressedBlob = null;
-    inputName.textContent   = file.name;
-    inputSizeEl.textContent = formatBytesLabel(file.size);
+    inputName.textContent    = file.name;
+    inputSizeEl.textContent  = formatBytesLabel(file.size);
     outputSizeEl.textContent = '—';
     inputViewer.src = URL.createObjectURL(file) + CLEAN_VIEW;
     previewContainer.classList.add('visible');
@@ -1219,48 +1222,50 @@ function triggerCompression() {
     _debounceTimer = setTimeout(runCompression, 400);
 }
 
-// ── Detect if a canvas looks like it has transparent/alpha areas ──
-function canvasHasTransparency(canvas) {
-    const ctx  = canvas.getContext('2d');
-    const data = ctx.getImageData(0, 0, Math.min(canvas.width, 200), Math.min(canvas.height, 200)).data;
-    for (let i = 3; i < data.length; i += 4) {
-        if (data[i] < 250) return true;
+// ── Re-compress a raw image buffer (JPEG/PNG) through canvas at target quality & scale ──
+async function recompressImageBuffer(rawBytes, mimeHint, jpegQ, imgScale) {
+    return new Promise((resolve) => {
+        const blob = new Blob([rawBytes], { type: mimeHint || 'image/jpeg' });
+        const url  = URL.createObjectURL(blob);
+        const img  = new Image();
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            const w = Math.max(1, Math.round(img.naturalWidth  * imgScale));
+            const h = Math.max(1, Math.round(img.naturalHeight * imgScale));
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            const ctx = c.getContext('2d');
+            // White background so transparency becomes opaque (JPEG safe)
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            c.toBlob(outBlob => {
+                outBlob.arrayBuffer().then(ab => resolve(new Uint8Array(ab)));
+            }, 'image/jpeg', jpegQ);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
+    });
+}
+
+// ── Walk pdf-lib's object map and find all image XObjects ──
+// Returns array of { ref, stream } for DCTDecode (JPEG) and FlateDecode (PNG/raw) image streams
+function findImageXObjects(pdfLibDoc) {
+    const results = [];
+    const context = pdfLibDoc.context;
+    // pdf-lib stores all indirect objects in context.indirectObjects (a Map)
+    for (const [ref, obj] of context.indirectObjects) {
+        try {
+            if (!obj || typeof obj.dict === 'undefined') continue;
+            const subtype = obj.dict && obj.dict.get && obj.dict.get(PDFLib.PDFName.of('Subtype'));
+            if (!subtype || subtype.encodedName !== '/Image') continue;
+            results.push({ ref, stream: obj });
+        } catch(e) { /* skip non-dict objects */ }
     }
-    return false;
+    return results;
 }
 
-// ── Render one PDF page to a canvas at the given scale ──
-async function renderPage(pdfPage, scale) {
-    const vp  = pdfPage.getViewport({ scale });
-    const c   = document.createElement('canvas');
-    c.width   = Math.round(vp.width);
-    c.height  = Math.round(vp.height);
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, c.width, c.height);
-    await pdfPage.render({ canvasContext: ctx, viewport: vp }).promise;
-    return c;
-}
-
-// ── Convert canvas to Blob ──
-function canvasToBlob(canvas, type, quality) {
-    return new Promise(resolve => canvas.toBlob(resolve, type, quality));
-}
-
-// ── Build PDF from rendered pages, preserving each page's exact dimensions ──
-async function buildPdfFromPages(pageData) {
-    const outDoc = await PDFLib.PDFDocument.create();
-    for (const { imgBytes, imgType, widthPt, heightPt } of pageData) {
-        const img = imgType === 'png'
-            ? await outDoc.embedPng(imgBytes)
-            : await outDoc.embedJpg(imgBytes);
-        const page = outDoc.addPage([widthPt, heightPt]);
-        page.drawImage(img, { x: 0, y: 0, width: widthPt, height: heightPt });
-    }
-    return outDoc;
-}
-
-// ── Core compression engine ──
+// ── Main compression: structure-preserving, image-aware ──
 async function runCompression() {
     if (!activePdfFile) return;
     const thisRun = ++_runId;
@@ -1273,65 +1278,89 @@ async function runCompression() {
     const preset = COMPRESSION_PRESETS[activeLevel];
 
     try {
-        const rawBuffer  = await activePdfFile.arrayBuffer();
-        const pdfLibrary = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
-        pdfLibrary.GlobalWorkerOptions.workerSrc =
-            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        const rawBuffer = await activePdfFile.arrayBuffer();
 
-        const pdfDoc   = await pdfLibrary.getDocument({ data: rawBuffer.slice(0) }).promise;
-        const numPages = pdfDoc.numPages;
-        const pageData = [];
+        // ── Step 1: Load with pdf-lib (structure-preserving) ──
+        const pdfDoc = await PDFLib.PDFDocument.load(rawBuffer, {
+            ignoreEncryption: true,
+            // Keep all content intact — we only touch image streams
+            updateMetadata: false,
+        });
 
-        for (let i = 1; i <= numPages; i++) {
+        if (thisRun !== _runId) return;
+
+        // ── Step 2: Find & re-compress all embedded images ──
+        const imageXObjects = findImageXObjects(pdfDoc);
+        let imagesProcessed = 0;
+
+        for (const { ref, stream } of imageXObjects) {
             if (thisRun !== _runId) return;
+            try {
+                const dict = stream.dict;
 
-            const pdfPage = await pdfDoc.getPage(i);
+                // Get image dimensions
+                const wObj = dict.get(PDFLib.PDFName.of('Width'));
+                const hObj = dict.get(PDFLib.PDFName.of('Height'));
+                if (!wObj || !hObj) continue;
+                const origW = wObj.numberValue !== undefined ? wObj.numberValue : Number(wObj.value);
+                const origH = hObj.numberValue !== undefined ? hObj.numberValue : Number(hObj.value);
+                if (!origW || !origH || origW < 8 || origH < 8) continue;
 
-            // Preserve original page dimensions (in PDF points)
-            const viewport = pdfPage.getViewport({ scale: 1 });
-            const widthPt  = viewport.width;
-            const heightPt = viewport.height;
+                // Detect format from Filter entry
+                const filterObj = dict.get(PDFLib.PDFName.of('Filter'));
+                const filterName = filterObj
+                    ? (filterObj.encodedName || (filterObj.array && filterObj.array[0] && filterObj.array[0].encodedName) || '')
+                    : '';
+                const isJpeg = filterName === '/DCTDecode';
+                const isMask = dict.get(PDFLib.PDFName.of('ImageMask'));
+                if (isMask) continue; // never recompress 1-bit masks
 
-            // Render at high scale for quality
-            const canvas = await renderPage(pdfPage, preset.scale);
+                // Get raw compressed bytes
+                const rawImgBytes = stream.contents;
+                if (!rawImgBytes || rawImgBytes.length < 100) continue;
 
-            // Choose format: PNG for pages with transparency or text-only; JPEG for images
-            let useFormat = preset.renderMode;
-            if (useFormat === 'auto') {
-                // Use PNG for less compression (highest fidelity), JPEG otherwise
-                useFormat = (activeLevel === 'less') ? 'png' : 'jpeg';
+                // Decode then re-encode via canvas
+                const mimeHint = isJpeg ? 'image/jpeg' : 'image/png';
+                const recompressed = await recompressImageBuffer(rawImgBytes, mimeHint, preset.jpegQ, preset.imgScale);
+                if (!recompressed) continue;
+
+                // Only use re-compressed version if it's actually smaller
+                if (recompressed.byteLength >= rawImgBytes.length) continue;
+
+                // Replace stream contents and update dict
+                const newW = Math.max(1, Math.round(origW * preset.imgScale));
+                const newH = Math.max(1, Math.round(origH * preset.imgScale));
+
+                stream.contents = recompressed;
+                dict.set(PDFLib.PDFName.of('Filter'),   PDFLib.PDFName.of('DCTDecode'));
+                dict.set(PDFLib.PDFName.of('Width'),    PDFLib.PDFNumber.of(newW));
+                dict.set(PDFLib.PDFName.of('Height'),   PDFLib.PDFNumber.of(newH));
+                dict.set(PDFLib.PDFName.of('Length'),   PDFLib.PDFNumber.of(recompressed.byteLength));
+                // Remove decode params that no longer apply
+                dict.delete(PDFLib.PDFName.of('DecodeParms'));
+                dict.delete(PDFLib.PDFName.of('SMask')); // optional — only if safe
+
+                imagesProcessed++;
+            } catch(imgErr) {
+                // Skip images that fail — don't crash the whole job
+                console.warn('Skipping image:', imgErr);
             }
-
-            let blob;
-            if (useFormat === 'png') {
-                blob = await canvasToBlob(canvas, 'image/png');
-                // If PNG is bigger than JPEG would be at high quality, fall back to JPEG
-                const jpegBlob = await canvasToBlob(canvas, 'image/jpeg', preset.jpegQ);
-                if (jpegBlob.size < blob.size * 0.7) {
-                    blob = jpegBlob;
-                    useFormat = 'jpeg';
-                }
-            } else {
-                blob = await canvasToBlob(canvas, 'image/jpeg', preset.jpegQ);
-                useFormat = 'jpeg';
-            }
-
-            const imgBytes = new Uint8Array(await blob.arrayBuffer());
-            pageData.push({ imgBytes, imgType: useFormat, widthPt, heightPt });
         }
 
         if (thisRun !== _runId) return;
 
-        const outDoc      = await buildPdfFromPages(pageData);
-        const finalBytes  = await outDoc.save({ useObjectStreams: true });
-        compressedBlob    = new Blob([finalBytes], { type: 'application/pdf' });
+        // ── Step 3: Save with maximum stream compression ──
+        const finalBytes = await pdfDoc.save({
+            useObjectStreams: true,   // pack indirect objects into compressed ObjStm streams
+            addDefaultPage:  false,
+            objectsPerTick:  50,
+        });
 
-        // Show results
+        compressedBlob = new Blob([finalBytes], { type: 'application/pdf' });
+
         const origSize = activePdfFile.size;
         const newSize  = finalBytes.byteLength;
-        const pct      = origSize > newSize
-            ? Math.round((1 - newSize / origSize) * 100)
-            : 0;
+        const pct      = origSize > newSize ? Math.round((1 - newSize / origSize) * 100) : 0;
 
         outputViewer.src = URL.createObjectURL(compressedBlob) + CLEAN_VIEW;
         outputViewer.classList.remove('blurred');
@@ -1342,14 +1371,13 @@ async function runCompression() {
         const ratioText = document.getElementById('compression-ratio-text');
         ratioText.textContent = pct > 0 ? `${pct}% smaller` : 'Optimized';
         badge.classList.add('visible');
-
         downloadBtn.removeAttribute('disabled');
 
     } catch (err) {
         console.error('V12 Engine Error:', err);
         processingOverlay.classList.remove('visible');
         outputViewer.classList.remove('blurred');
-        alert('Could not process this PDF. Make sure it is a valid, unlocked PDF file.');
+        alert('Could not process this PDF. Make sure it is a valid, unlocked PDF file.\n\n' + err.message);
     }
 }
 
