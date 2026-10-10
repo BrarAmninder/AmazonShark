@@ -6,16 +6,16 @@
 <title>GhostLink — Encrypted one-time messages</title>
 <style>
   :root {
-    --bg: #0D1117; --bg-2: #161B22; --bg-3: #1C2128; --bg-4: #21262D;
-    --border: rgba(48,54,61,0.8); --border-bright: rgba(88,96,105,0.6);
-    --text: #E6EDF3; --text-dim: #8B949E; --text-muted: #484F58;
-    --accent: #6E76E5; --accent-glow: rgba(110,118,229,0.15); --accent-2: #7983E8;
-    --green: #3FB950; --green-bg: rgba(63,185,80,0.1);
-    --red: #F85149; --red-bg: rgba(248,81,73,0.1);
-    --amber: #D29922; --amber-bg: rgba(210,153,34,0.1);
-    --radius: 8px; --radius-lg: 12px;
-    --mono: ui-monospace,'Cascadia Code','Fira Code','SF Mono',Menlo,Consolas,monospace;
-    --sans: ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --bg:#0D1117;--bg-2:#161B22;--bg-3:#1C2128;--bg-4:#21262D;
+    --border:rgba(48,54,61,0.8);--border-bright:rgba(88,96,105,0.6);
+    --text:#E6EDF3;--text-dim:#8B949E;--text-muted:#484F58;
+    --accent:#6E76E5;--accent-glow:rgba(110,118,229,0.15);--accent-2:#7983E8;
+    --green:#3FB950;--green-bg:rgba(63,185,80,0.1);
+    --red:#F85149;--red-bg:rgba(248,81,73,0.1);
+    --amber:#D29922;--amber-bg:rgba(210,153,34,0.1);
+    --radius:8px;--radius-lg:12px;
+    --mono:ui-monospace,'Cascadia Code','Fira Code','SF Mono',Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:0 1rem;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,16px)}
@@ -109,10 +109,6 @@
   .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,0.2);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
   @keyframes spin{to{transform:rotate(360deg)}}
   .inline-error{font-size:12.5px;color:var(--red);margin-top:6px;display:flex;align-items:center;gap:5px;min-height:20px}
-  /* DB status badge */
-  .db-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid;margin-left:8px}
-  .db-badge.online{color:var(--green);border-color:rgba(63,185,80,0.3);background:var(--green-bg)}
-  .db-badge.offline{color:var(--amber);border-color:rgba(210,153,34,0.3);background:var(--amber-bg)}
   @media(max-width:480px){.compose-heading{font-size:21px}.header{padding-top:1.25rem}.main{margin-top:2rem}.options-row{gap:6px}}
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
@@ -129,15 +125,16 @@
     <span class="logo-name">Ghost<span>Link</span></span>
   </div>
   <div class="header-spacer"></div>
-  <div class="header-badge" id="header-badge">end-to-end encrypted</div>
+  <div class="header-badge">end-to-end encrypted</div>
 </header>
 
 <main class="main">
+
   <!-- Compose View -->
   <div class="view active" id="view-compose">
     <p class="section-label">New message</p>
     <h1 class="compose-heading">Write. Encrypt. Share once.</h1>
-    <p class="compose-sub">Your message is encrypted in your browser. The recipient sees it exactly once — on any device, any browser, any network. Once read, the link is permanently destroyed on our server.</p>
+    <p class="compose-sub">Your message is encrypted in your browser. The recipient sees it once — on any device, any browser, any network. Once read, the link is permanently destroyed.</p>
 
     <div class="message-area-wrapper">
       <textarea id="msg-input" placeholder="Type your private message here…" maxlength="50000" autocomplete="off" spellcheck="true" aria-label="Message to encrypt"></textarea>
@@ -166,7 +163,7 @@
         </div>
         <div>
           <div class="result-title">Link created</div>
-          <div class="result-desc">Send this link to your recipient — works on any device</div>
+          <div class="result-desc">Send this link — it works on every device worldwide</div>
         </div>
       </div>
       <div class="link-box">
@@ -179,15 +176,15 @@
       <div class="info-row">
         <div class="info-chip"><span class="dot"></span> encrypted locally</div>
         <div class="info-chip" id="expiry-chip">burns after reading</div>
-        <div class="info-chip" id="db-status-chip">⬡ server burn: connecting…</div>
+        <div class="info-chip">⬡ supabase burn registry</div>
       </div>
       <div class="notice green" style="margin-top:14px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-        <span><strong>Server-enforced burn.</strong> Once opened, this link is permanently destroyed in our database — blocked on every device, browser, VPN, or network worldwide.</span>
+        <span><strong>Supabase server enforced.</strong> Once opened, the burn is written to your database — blocked on every device, browser, VPN, and IP address worldwide. No bypass possible.</span>
       </div>
       <div class="notice amber" style="margin-top:10px;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-        <span>Save this link now — you cannot retrieve it again from this page.</span>
+        <span>Save this link now — you cannot retrieve it from this page again.</span>
       </div>
       <button class="btn-ghost new-msg-btn" onclick="resetCompose()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
@@ -198,29 +195,30 @@
 
   <!-- Reveal View -->
   <div class="view" id="view-reveal">
-    <!-- Checking state (shown while DB lookup happens) -->
+
+    <!-- Checking state -->
     <div id="state-checking" class="reveal-outer" style="display:none">
       <div class="reveal-icon-wrap ready">
-        <div class="spinner" style="width:28px;height:28px;border-width:3px;border-top-color:#6E76E5;border-color:rgba(110,118,229,0.2)"></div>
+        <div class="spinner" style="width:28px;height:28px;border-width:3px;border-top-color:#6E76E5;border-color:rgba(110,118,229,0.25)"></div>
       </div>
-      <h1 class="reveal-title">Verifying link…</h1>
-      <p class="reveal-body">Checking burn status on the server. This takes less than a second.</p>
+      <h1 class="reveal-title">Checking link…</h1>
+      <p class="reveal-body">Verifying burn status in the database. One moment.</p>
     </div>
 
     <!-- Ready state -->
     <div id="state-ready" class="reveal-outer" style="display:none">
       <div class="reveal-icon-wrap ready">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6E76E5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6E76E5" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
       </div>
       <h1 class="reveal-title">Encrypted message waiting</h1>
-      <p class="reveal-body">Someone sent you a private message. It can only be read <strong>once</strong> — opening it will permanently destroy this link on our server, blocking it on every device worldwide.</p>
+      <p class="reveal-body">Someone sent you a private message. It can only be read <strong>once</strong> — this link will be permanently destroyed in the database the moment you open it.</p>
       <button class="reveal-btn" onclick="revealMessage()" id="reveal-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
         Reveal message
       </button>
       <div class="reveal-warning">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-        This is irreversible. The link will stop working everywhere after you read it.
+        Irreversible. Works on every device — VPN or not.
       </div>
     </div>
 
@@ -230,7 +228,7 @@
         <div id="hold-overlay" class="anti-screenshot-overlay">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);margin-bottom:12px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           <h3 style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px">Tap and Hold to Read</h3>
-          <p style="font-size:13px;color:var(--text-dim);text-align:center;max-width:260px">This message is protected against screenshots and copying. Letting go will hide the text.</p>
+          <p style="font-size:13px;color:var(--text-dim);text-align:center;max-width:260px">Protected against screenshots. Letting go hides the text.</p>
         </div>
         <div class="msg-header">
           <div class="msg-header-left"><span class="msg-live-dot"></span>decrypted in browser — screenshot restricted</div>
@@ -239,14 +237,14 @@
         <div class="msg-footer">
           <div class="burned-badge">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-            Link burned — permanently destroyed on server
+            Burned in Supabase — blocked everywhere permanently
           </div>
           <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted)" id="decrypted-time">now</div>
         </div>
       </div>
       <div class="notice" style="max-width:480px;text-align:left;margin-bottom:1.5rem">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-        <span>This link is now permanently burned in our server database. Anyone who tries to open it again — on any device, browser, VPN, or IP address — will see the burned state.</span>
+        <span>This link is now permanently written as burned in your Supabase database. Anyone opening it again — on any device, browser, VPN, or IP — will be blocked instantly.</span>
       </div>
       <button class="btn-ghost" onclick="goHome()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -260,7 +258,7 @@
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F85149" stroke-width="1.8"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
       </div>
       <h1 class="reveal-title">Link already used</h1>
-      <p class="reveal-body">This message was already revealed and permanently deleted from our server. One-time links cannot be read twice — on any device or network.</p>
+      <p class="reveal-body">This message was already revealed and permanently deleted from the database. It cannot be read again — on any device or network.</p>
       <button class="btn-ghost" onclick="goHome()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         Send a new message
@@ -273,7 +271,7 @@
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8B949E" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m14.5 9-5 5"/><path d="m9.5 9 5 5"/></svg>
       </div>
       <h1 class="reveal-title">Invalid link</h1>
-      <p class="reveal-body" id="invalid-reason">This link is not valid. It may have been truncated, modified, or corrupted.</p>
+      <p class="reveal-body" id="invalid-reason">This link is not valid. It may be truncated, modified, or corrupted.</p>
       <button class="btn-ghost" onclick="goHome()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         Go home
@@ -286,12 +284,26 @@
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D29922" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       </div>
       <h1 class="reveal-title">Link expired</h1>
-      <p class="reveal-body">This link had a time window that has now passed. The message is gone.</p>
+      <p class="reveal-body">This link's time window has passed. The message is gone.</p>
       <button class="btn-ghost" onclick="goHome()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         Go home
       </button>
     </div>
+
+    <!-- DB Error state -->
+    <div id="state-dberror" class="reveal-outer" style="display:none">
+      <div class="reveal-icon-wrap" style="border-color:rgba(210,153,34,0.3);background:var(--amber-bg)">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D29922" stroke-width="1.8"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      </div>
+      <h1 class="reveal-title">Database error</h1>
+      <p class="reveal-body">Could not reach the burn registry. For security, this link will not open until the database is available. Please try again in a moment.</p>
+      <button class="reveal-btn" onclick="retryInit()" style="background:var(--amber)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        Retry
+      </button>
+    </div>
+
   </div>
 </main>
 
@@ -311,22 +323,22 @@
     <div class="step-cell">
       <div class="step-num">03</div>
       <div class="step-label">Key in the URL</div>
-      <div class="step-detail">The cipher key is in the link's <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">#fragment</code>, which browsers never send to servers.</div>
+      <div class="step-detail">The cipher key lives in the link's <code style="font-family:var(--mono);font-size:11px;color:var(--accent)">#fragment</code> — never sent to any server.</div>
     </div>
     <div class="step-cell">
       <div class="step-num">04</div>
-      <div class="step-label">Server burn registry</div>
-      <div class="step-detail">Once revealed, a burn record is written to our server database. Every future open — any device, VPN, browser — is permanently blocked.</div>
+      <div class="step-label">Supabase burn</div>
+      <div class="step-detail">On first open, a burn record is written to Supabase. Every future attempt — any device, VPN, browser — is permanently blocked.</div>
     </div>
   </div>
   <div class="notice" style="margin-top:1rem">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-    <span><strong style="color:var(--text-dim)">True one-time enforcement:</strong> Unlike localStorage-only approaches, GhostLink writes to a server-side database on first open. This means the burn state is global — no VPN, device change, browser switch, or cache clearing can bypass it.</span>
+    <span><strong style="color:var(--text-dim)">True global enforcement:</strong> The burn is stored in your Supabase database — not in the browser. Clearing cache, switching devices, using a VPN, or opening in any other browser cannot bypass it.</span>
   </div>
 </section>
 
 <footer class="footer">
-  <div class="footer-left">ghostlink · server-enforced · end-to-end encrypted</div>
+  <div class="footer-left">ghostlink · supabase-enforced · end-to-end encrypted</div>
   <div class="footer-right">
     <a href="#" onclick="goHome();return false">New message</a>
     <a href="#" onclick="showAbout();return false">About</a>
@@ -334,41 +346,84 @@
 </footer>
 
 <script>
+// ═══════════════════════════════════════════════
+//  SUPABASE CONFIG  (your real credentials)
+// ═══════════════════════════════════════════════
+const SUPABASE_URL = 'https://lzrjbrisjgigmlymuxmv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_b4N20NJ3ERPBXOUud4zZkQ_wqhAXg3Y';
+const TABLE = 'burns';  // table name in your Supabase database
+
+// ═══════════════════════════════════════════════
+//  SUPABASE HELPERS  (direct REST API — no SDK needed)
+// ═══════════════════════════════════════════════
+async function sbGet(burnId) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${TABLE}?burn_id=eq.${encodeURIComponent(burnId)}&select=burn_id`,
+    { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+  );
+  if (!res.ok) throw new Error('db_read_failed');
+  const rows = await res.json();
+  return rows.length > 0; // true = already burned
+}
+
+async function sbSet(burnId) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${TABLE}`,
+    {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({ burn_id: burnId, burned_at: new Date().toISOString() })
+    }
+  );
+  // 201 = inserted, 409 = already exists (duplicate — still burned)
+  if (!res.ok && res.status !== 409) throw new Error('db_write_failed');
+  return true;
+}
+
+// Derive a stable, short burn_id from the fragment
+function getBurnId(fragmentRaw) {
+  // Use first 64 chars — unique per link, safe for DB primary key
+  return fragmentRaw.substring(0, 64).replace(/[^a-zA-Z0-9_-]/g, 'X');
+}
+
+// ═══════════════════════════════════════════════
+//  CRYPTO HELPERS  (unchanged from original)
+// ═══════════════════════════════════════════════
 const VERSION = 'gl1';
 
-// ── Crypto helpers (unchanged) ──
 function bytesToBase64url(bytes) {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  let b = '';
+  for (let i = 0; i < bytes.length; i++) b += String.fromCharCode(bytes[i]);
+  return btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 }
 function base64urlToBytes(str) {
   const pad = str.length % 4;
-  const padded = pad ? str + '='.repeat(4-pad) : str;
-  const b64 = padded.replace(/-/g,'+').replace(/_/g,'/');
-  const binary = atob(b64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
+  const p = pad ? str + '='.repeat(4-pad) : str;
+  const b64 = p.replace(/-/g,'+').replace(/_/g,'/');
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
 }
 async function generateKey() { return crypto.subtle.generateKey({name:'AES-GCM',length:256},true,['encrypt','decrypt']); }
-async function exportKey(key) { const raw = await crypto.subtle.exportKey('raw',key); return bytesToBase64url(new Uint8Array(raw)); }
-async function importKey(keyB64) { const raw = base64urlToBytes(keyB64); return crypto.subtle.importKey('raw',raw,{name:'AES-GCM',length:256},false,['decrypt']); }
+async function exportKey(key) { const r = await crypto.subtle.exportKey('raw',key); return bytesToBase64url(new Uint8Array(r)); }
+async function importKey(keyB64) { return crypto.subtle.importKey('raw',base64urlToBytes(keyB64),{name:'AES-GCM',length:256},false,['decrypt']); }
 async function encryptMessage(text, key) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encoded = new TextEncoder().encode(text);
-  const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM',iv},key,encoded);
-  return { iv: bytesToBase64url(iv), ct: bytesToBase64url(new Uint8Array(ciphertext)) };
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(text));
+  return { iv: bytesToBase64url(iv), ct: bytesToBase64url(new Uint8Array(ct)) };
 }
 async function decryptMessage(ivB64, ctB64, key) {
-  const iv = base64urlToBytes(ivB64);
-  const ct = base64urlToBytes(ctB64);
-  const plaintext = await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);
-  return new TextDecoder().decode(plaintext);
+  const plain = await crypto.subtle.decrypt({name:'AES-GCM',iv:base64urlToBytes(ivB64)},key,base64urlToBytes(ctB64));
+  return new TextDecoder().decode(plain);
 }
 function buildFragment(keyB64, ivB64, ctB64, expiryMode) {
-  const now = Math.floor(Date.now()/1000);
-  return `${VERSION}.${expiryMode}.${now}.${keyB64}.${ivB64}.${ctB64}`;
+  return `${VERSION}.${expiryMode}.${Math.floor(Date.now()/1000)}.${keyB64}.${ivB64}.${ctB64}`;
 }
 function parseFragment(frag) {
   if (!frag || frag.startsWith('#')) frag = frag ? frag.slice(1) : '';
@@ -383,85 +438,15 @@ function parseFragment(frag) {
   return { version, expiryMode, createdAt: Number(createdAt), keyB64, ivB64, ctB64 };
 }
 function isExpired(parsed) {
-  const now = Math.floor(Date.now()/1000);
-  const age = now - parsed.createdAt;
+  const age = Math.floor(Date.now()/1000) - parsed.createdAt;
   if (parsed.expiryMode === '1h' && age > 3600) return true;
   if (parsed.expiryMode === '24h' && age > 86400) return true;
   return false;
 }
 
-// ── Burn key derivation (first 48 chars of fragment as doc id) ──
-function getBurnDocId(fragmentRaw) {
-  // Use first 48 chars — unique enough, avoids overly long DB keys
-  return 'burn_' + fragmentRaw.substring(0, 48).replace(/[^a-zA-Z0-9_-]/g,'X');
-}
-
-// ── Server-side DB burn registry ──
-let db = null;
-let dbReady = false;
-
-async function initDB() {
-  try {
-    db = await window.claude.use('db');
-    dbReady = (db !== null);
-    updateDbStatusChip(dbReady ? 'online' : 'offline');
-  } catch(e) {
-    dbReady = false;
-    updateDbStatusChip('offline');
-  }
-}
-
-function updateDbStatusChip(status) {
-  const chip = document.getElementById('db-status-chip');
-  if (!chip) return;
-  if (status === 'online') {
-    chip.textContent = '⬡ server burn: active';
-    chip.style.color = 'var(--green)';
-  } else {
-    chip.textContent = '⬡ server burn: fallback';
-    chip.style.color = 'var(--amber)';
-  }
-}
-
-// Check server-side: returns 'burned', 'available', or 'unknown' (DB unavailable)
-async function checkBurnedOnServer(fragmentRaw) {
-  if (!dbReady || !db) return 'unknown';
-  try {
-    const docId = getBurnDocId(fragmentRaw);
-    const result = await db.doc('burns/' + docId).get();
-    if (result && result.burned) return 'burned';
-    return 'available';
-  } catch(e) {
-    // Key not found = not burned
-    if (e && (e.code === 'not_found' || e.message?.includes('not_found') || e.message?.includes('404'))) {
-      return 'available';
-    }
-    return 'unknown';
-  }
-}
-
-// Write burn record to server
-async function markBurnedOnServer(fragmentRaw) {
-  if (!dbReady || !db) return false;
-  try {
-    const docId = getBurnDocId(fragmentRaw);
-    await db.doc('burns/' + docId).set({
-      burned: true,
-      burnedAt: new Date().toISOString(),
-      fragPrefix: fragmentRaw.substring(0, 20)
-    });
-    return true;
-  } catch(e) {
-    return false;
-  }
-}
-
-// ── localStorage fallback (for when DB is unavailable) ──
-function getBurnKey(fragmentRaw) { return 'gl_burned_' + fragmentRaw.substring(0,48); }
-function isBurnedLocally(fragmentRaw) { try { return localStorage.getItem(getBurnKey(fragmentRaw)) !== null; } catch { return false; } }
-function markBurnedLocally(fragmentRaw) { try { localStorage.setItem(getBurnKey(fragmentRaw), new Date().toISOString()); } catch {} }
-
-// ── UI helpers ──
+// ═══════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════
 const msgInput = document.getElementById('msg-input');
 const charCount = document.getElementById('char-count');
 const createBtn = document.getElementById('create-btn');
@@ -469,6 +454,7 @@ const resultCard = document.getElementById('result-card');
 const resultLinkDisplay = document.getElementById('result-link-display');
 const composeError = document.getElementById('compose-error');
 let generatedLink = '';
+let currentFragRaw = '';
 
 msgInput.addEventListener('input', () => {
   const len = msgInput.value.length;
@@ -493,10 +479,9 @@ async function createLink() {
     const fragment = buildFragment(keyB64, iv, ct, expiryMode);
     const linkUrl = new URL(window.location.href);
     linkUrl.search = ''; linkUrl.hash = fragment;
-    const url = linkUrl.href;
-    generatedLink = url;
+    generatedLink = linkUrl.href;
     resultLinkDisplay.innerHTML = `<strong>${window.location.hostname + window.location.pathname}</strong><span style="color:var(--text-muted)">#…${ct.substring(0,12)}…</span>`;
-    resultLinkDisplay.title = url;
+    resultLinkDisplay.title = generatedLink;
     document.getElementById('expiry-chip').textContent =
       expiryMode === '1h' ? 'burns after reading · 1h max' :
       expiryMode === '24h' ? 'burns after reading · 24h max' : 'burns after reading';
@@ -532,50 +517,53 @@ function resetCompose() {
   msgInput.focus();
 }
 
+// ═══════════════════════════════════════════════
+//  REVEAL  (server-side burn check + write)
+// ═══════════════════════════════════════════════
 async function revealMessage() {
-  const fragRaw = window.location.hash.substring(1);
+  const fragRaw = currentFragRaw;
   const parsed = parseFragment(fragRaw);
   if (!parsed) { showState('invalid'); return; }
 
   const btn = document.getElementById('reveal-btn');
   btn.disabled = true;
-  btn.innerHTML = `<div class="spinner"></div> Burning on server…`;
+  btn.innerHTML = `<div class="spinner"></div> Burning in database…`;
 
   try {
-    // Write burn to server BEFORE decrypting (atomic: even if decrypt fails, it's burned)
-    const serverBurned = await markBurnedOnServer(fragRaw);
-    // Also burn locally as belt-and-suspenders
-    markBurnedLocally(fragRaw);
+    // Write burn to Supabase FIRST — before decrypting
+    // This ensures even if decryption fails, link is gone
+    await sbSet(getBurnId(fragRaw));
 
     // Now decrypt
     const key = await importKey(parsed.keyB64);
     const plaintext = await decryptMessage(parsed.ivB64, parsed.ctB64, key);
 
     document.getElementById('decrypted-text').textContent = plaintext;
-    document.getElementById('decrypted-time').textContent = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('decrypted-time').textContent =
+      new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
     document.getElementById('state-ready').style.display = 'none';
     document.getElementById('state-decrypted').style.display = 'flex';
     document.getElementById('how-section').style.display = 'none';
 
-    // Wipe the fragment so the URL itself no longer contains the key
+    // Wipe key from URL immediately
     window.history.replaceState(null, '', window.location.pathname);
   } catch(err) {
-    // Even if decryption fails, the link is burned on server
-    document.getElementById('invalid-reason').textContent = 'Decryption failed. The link may have been modified or corrupted. The link has also been burned for safety.';
+    document.getElementById('invalid-reason').textContent =
+      'Decryption failed. The link may be corrupted. It has been burned for security.';
     showState('invalid');
   }
 }
 
 function showState(name) {
-  ['checking','ready','decrypted','burned','invalid','expired'].forEach(s => {
+  ['checking','ready','decrypted','burned','invalid','expired','dberror'].forEach(s => {
     const el = document.getElementById('state-' + s);
     if (el) el.style.display = s === name ? 'flex' : 'none';
   });
 }
 
 function goHome() {
-  window.history.replaceState(null,'', window.location.pathname);
+  window.history.replaceState(null, '', window.location.pathname);
   document.getElementById('view-compose').classList.add('active');
   document.getElementById('view-reveal').classList.remove('active');
   document.getElementById('how-section').style.display = 'block';
@@ -585,66 +573,64 @@ function goHome() {
 function showAbout() {
   alert('GhostLink — One-time encrypted messages\n\n' +
     '• AES-256-GCM encryption in your browser\n' +
-    '• Server-side burn registry — blocked globally after first read\n' +
-    '• No VPN, device switch, or browser can bypass the server burn\n' +
-    '• The decryption key never reaches our servers (it\'s in the #fragment)\n' +
-    '• Anti-screenshot protection when reading');
+    '• Burn registry stored in Supabase database\n' +
+    '• Blocked globally after first read — any device, VPN, browser\n' +
+    '• Decryption key never reaches any server (#fragment)');
 }
 
-// ── Anti-screenshot ──
+async function retryInit() {
+  showState('checking');
+  await initReveal();
+}
+
+// ═══════════════════════════════════════════════
+//  ANTI-SCREENSHOT
+// ═══════════════════════════════════════════════
 const holdOverlay = document.getElementById('hold-overlay');
 const decText = document.getElementById('decrypted-text');
+function showProtected(e) { if(e&&e.type!=='touchstart')e.preventDefault(); holdOverlay.style.opacity='0'; holdOverlay.style.pointerEvents='none'; decText.classList.remove('hidden-protect'); }
+function hideProtected() { holdOverlay.style.opacity='1'; holdOverlay.style.pointerEvents='auto'; decText.classList.add('hidden-protect'); }
+if(holdOverlay){ holdOverlay.addEventListener('mousedown',showProtected); holdOverlay.addEventListener('touchstart',showProtected,{passive:false}); }
+window.addEventListener('mouseup',hideProtected);
+window.addEventListener('touchend',hideProtected);
+window.addEventListener('blur',hideProtected);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) hideProtected(); });
+document.addEventListener('keyup',(e)=>{ if(e.key==='PrintScreen'||e.key==='Meta'){ hideProtected(); navigator.clipboard.writeText(''); } });
+document.addEventListener('contextmenu',(e)=>{ if(document.getElementById('state-decrypted').style.display!=='none') e.preventDefault(); });
 
-function showProtectedMessage(e) { if(e&&e.type!=='touchstart')e.preventDefault(); holdOverlay.style.opacity='0'; holdOverlay.style.pointerEvents='none'; decText.classList.remove('hidden-protect'); }
-function hideProtectedMessage() { holdOverlay.style.opacity='1'; holdOverlay.style.pointerEvents='auto'; decText.classList.add('hidden-protect'); }
-if(holdOverlay){holdOverlay.addEventListener('mousedown',showProtectedMessage);holdOverlay.addEventListener('touchstart',showProtectedMessage,{passive:false});}
-window.addEventListener('mouseup',hideProtectedMessage);
-window.addEventListener('touchend',hideProtectedMessage);
-window.addEventListener('blur',hideProtectedMessage);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)hideProtectedMessage();});
-document.addEventListener('keyup',(e)=>{if(e.key==='PrintScreen'||e.key==='Meta'){hideProtectedMessage();navigator.clipboard.writeText('');}});
-document.addEventListener('contextmenu',(e)=>{if(document.getElementById('state-decrypted').style.display!=='none')e.preventDefault();});
+// ═══════════════════════════════════════════════
+//  INIT  — check Supabase FIRST, then show state
+// ═══════════════════════════════════════════════
+async function initReveal() {
+  const fragRaw = window.location.hash.substring(1);
+  const parsed = parseFragment(fragRaw);
 
-// ── Init ──
-(async function init() {
-  // Start DB init in background
-  const dbInitPromise = initDB();
+  if (!parsed) { showState('invalid'); return; }
+  if (isExpired(parsed)) { showState('expired'); return; }
 
+  showState('checking');
+
+  try {
+    const burned = await sbGet(getBurnId(fragRaw));
+    if (burned) { showState('burned'); return; }
+    showState('ready');
+  } catch(err) {
+    // DB unreachable — show error, do NOT allow opening
+    showState('dberror');
+  }
+}
+
+(function init() {
   const frag = window.location.hash;
   if (!frag || frag === '#') {
     document.getElementById('view-compose').classList.add('active');
     return;
   }
-  const fragRaw = frag.substring(1);
-  const parsed = parseFragment(fragRaw);
-
+  currentFragRaw = frag.substring(1);
   document.getElementById('view-compose').classList.remove('active');
   document.getElementById('view-reveal').classList.add('active');
   document.getElementById('how-section').style.display = 'none';
-
-  if (!parsed) { showState('invalid'); return; }
-  if (isExpired(parsed)) { showState('expired'); return; }
-
-  // Show checking state while we wait for DB
-  showState('checking');
-
-  // Wait for DB to init, then check server
-  await dbInitPromise;
-
-  const serverStatus = await checkBurnedOnServer(fragRaw);
-
-  if (serverStatus === 'burned') {
-    showState('burned');
-    return;
-  }
-
-  // Also check local fallback
-  if (serverStatus === 'unknown' && isBurnedLocally(fragRaw)) {
-    showState('burned');
-    return;
-  }
-
-  showState('ready');
+  initReveal();
 })();
 </script>
 </body>
